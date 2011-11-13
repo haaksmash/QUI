@@ -1,4 +1,4 @@
-from decorators import stored
+from decorators import *
 
 class StrField(object):
     pass
@@ -7,7 +7,7 @@ class IntField(object):
     pass
 
 
-@stored(db="mongodb", primary_key="unique_id")
+@stored_direct(db="mongodb", primary_key="unique_id")
 class Tester(object):
     unique_id = 1
     def __init__(self, age):
@@ -17,10 +17,12 @@ class Tester(object):
     def __repr__(self):
         return u"{}".format(self.name)
 
-
+@stored_mixin
 class Tester2(object):
     unique_id = 3
-
-@stored(primary_key="unique_id")
-class Tester3(Tester2):
+    def reveal(self):
+        print "not overwritten"
+        
+@stored_mixin(db="simpledb")        
+class Tester3(object):
     pass

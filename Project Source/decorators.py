@@ -1,5 +1,6 @@
 from model_exceptions import *
 
+from mixins import *
 
 SUPPORTED_BACKENDS = ["appengine","simpledb", "mongodb",]
 
@@ -27,7 +28,7 @@ class Primary_Key(object):
 
 
 #class stored:
-class Stored(object):
+class Stored_Direct(object):
     # Makes our decorator actually work with a class
     def __call__(self, *args, **kwargs):
         
@@ -89,16 +90,54 @@ class Stored(object):
 #        pass
 
 
-def stored(cls=None, db="appengine", primary_key=None):
+class Stored_Mixin(object):
+    def __call__(self, *args, **kwargs):
+        return self.cls.__call__(*args, **kwargs)
+    
+    def __get__(self, *args, **kwargs):
+        return self.cls.__get__(*args, **kwargs)
+    
+    def __init__(self, cls, *args, **kwargs):
+        cls.__bases__ +=  (Storable,)
+
+
+
+def stored_direct(cls=None, db="appengine", primary_key=None):
     """
         This decorater allows users to decorate with or
         without a specified backend as their storage
         engine
     """
     if cls:
-        return Stored(cls)
+        return Stored_Direct(cls)
     else:
         def wrapper(cls):
-            return Stored(cls, backend=db, primary_key=primary_key)
+            return Stored_Direct(cls, backend=db, primary_key=primary_key)
 
+    return wrapper
+
+
+def stored_mixin(cls=None, *args, **kwargs):
+    if cls:
+        bases = (cls,)+cls.__bases__
+        mixins = []
+        cls = type(cls.__name__, (Stored_in_Appengine,) + bases, {})
+        return cls     
+    else:
+        mixins = []
+        if kwargs.has_key('db'):
+            if kwargs['db'] == 'simpledb':
+                mixins = [Stored_in_SimpleDB]+mixins
+        else:
+            mixins = [Stored_in_Appengine] + mixins
+            
+        def wrapper(cls):
+            bases = (cls,)+cls.__bases__
+            
+            for mix in mixins:
+                if mix not in bases:
+                    print "Adding {} to {}...".format(mix, cls.__name__)
+                    bases = (mix, ) + bases 
+            cls = type(cls.__name__, bases, {})
+            return cls
     return wrapper
