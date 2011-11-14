@@ -1,7 +1,7 @@
 '''
 Created on Nov 10, 2011
 
-@author: Haak Saxberg, Jess Hester
+@author: Haak Saxberg and Jess Hester
 '''
 import abc
 
@@ -16,24 +16,29 @@ class Model(object):
 	"""
 	__metaclass__ = abc.ABCMeta
 	
+    @abc.abstractmethod
 	@classmethod
 	def create(cls, **kwargs):
 		"""Creates an internal representation of a Model from kwargs"""
 		raise NotImplementedError(u"Create not overridden")
 
+    @abc.abstractmethod
 	@classmethod
 	def get(cls, key):
 		"""Gets an instance of the model using a unique primary key"""
 		raise NotImplementedError(u"Get not overridden")
-
+    
+    @abc.abstractmethod
 	def get_interface(self):
 		"""Returns an interface to the correct backend API"""
 		raise NotImplementedError(u"Get interface not overridden")
-
+    
+    @abc.abstractmethod
 	def put(self):
 		"""Store this instance in the backend"""
 		raise NotImplementedError(u"Put not overridden")
-
+    
+    @abc.abstractmethod
 	def pk(self):
 		"""Gets the primary key field's value for this model"""
 		pks = []
@@ -53,3 +58,15 @@ class Model(object):
 
 	def __repr__(self):
 		return u"QUI Model: {}".format(self.__name__)
+
+
+class ModelInstance():
+    __metaclass__ = abc.ABCMeta
+    
+    @abc.abstractmethod
+    def put(self):
+        pass
+    
+    @abc.abstractmethod
+    def delete(self):
+        pass
