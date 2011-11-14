@@ -4,9 +4,10 @@ Created on Nov 13, 2011
 @author: Haak Saxberg and Jess Hester
 '''
 import abc
-from fields import *
-from backends.google.google.appengine.ext import db
 
+from fields import *
+
+from backends.google.google.appengine.ext import db
 
 class FieldMixin(object):
     """
