@@ -1,0 +1,175 @@
+% !TEX TS-program = pdflatex
+% !TEX encoding = UTF-8 Unicode
+
+% This is a simple template for a LaTeX document using the "article" class.
+% See "book", "report", "letter" for other types of document.
+
+\documentclass{article} % use larger type; default would be 10pt
+
+\usepackage[utf8]{inputenc} % set input encoding (not needed with XeLaTeX)
+
+%%% Examples of Article customizations
+% These packages are optional, depending whether you want the features they provide.
+% See the LaTeX Companion or other references for full information.
+
+%%% PAGE DIMENSIONS
+\usepackage{geometry} % to change the page dimensions
+\geometry{a4paper} % or letterpaper (US) or a5paper or....
+\geometry{margin=1in} % for example, change the margins to 2 inches all round
+% \geometry{landscape} % set up the page for landscape
+%   read geometry.pdf for detailed page layout information
+
+\usepackage{graphicx} % support the \includegraphics command and options
+
+ \usepackage[parfill]{parskip} % Activate to begin paragraphs with an empty line rather than an indent
+
+%%% PACKAGES
+\usepackage{booktabs} % for much better looking tables
+\usepackage{array} % for better arrays (eg matrices) in maths
+\usepackage{paralist} % very flexible & customisable lists (eg. enumerate/itemize, etc.)
+\usepackage{verbatim} % adds environment for commenting out blocks of text & for better verbatim
+\usepackage{subfig} % make it possible to include more than one captioned figure/table in a single float
+% These packages are all incorporated in the memoir class to one degree or another...
+
+\usepackage[usenames,dvipsnames]{color}
+\usepackage{textcomp}
+\usepackage{listings}
+\lstset{ 
+language=Python,                % choose the language of the code
+basicstyle=\scriptsize,       % the size of the fonts that are used for the code
+identifierstyle=\ttfamily,
+numbers=left,                   % where to put the line-numbers
+numberstyle=\ttfamily,      % the size of the fonts that are used for the line-numbers
+stepnumber=1,                   % the step between two line-numbers. If it is 1 each line will be numbered
+numbersep=2pt,                  % how far the line-numbers are from the code
+backgroundcolor=\color[rgb]{0.95,.95,.95},  % choose the background color. You must add \usepackage{color}
+showspaces=false,               % show spaces adding particular underscores
+showstringspaces=false,         % underline spaces within strings
+showtabs=false,                 % show tabs within strings adding particular underscores
+%frame=single,   		% adds a frame around the code
+tabsize=2,  		% sets default tabsize to 2 spaces
+captionpos=b,   		% sets the caption-position to bottom
+breaklines=true,    	% sets automatic line breaking
+breakatwhitespace=false,    % sets if automatic breaks should only happen at whitespace
+escapeinside={\%}{)},          % if you want to add a comment within your code
+upquote=true,
+keywordstyle=\color{blue}\ttfamily,
+commentstyle=\ttfamily\color{ForestGreen},
+stringstyle=\color{red}\ttfamily,
+upquote=true
+}
+
+%%% HEADERS & FOOTERS
+\usepackage{fancyhdr} % This should be set AFTER setting up the page geometry
+\pagestyle{fancy} % options: empty , plain , fancy
+\renewcommand{\headrulewidth}{0pt} % customise the layout...
+\lhead{QUI}\chead{}\rhead{J.H., H.S.}
+\lfoot{}\cfoot{\thepage}\rfoot{}
+
+%%% SECTION TITLE APPEARANCE
+\usepackage{sectsty}
+\allsectionsfont{\sffamily\mdseries\upshape} % (See the fntguide.pdf for font help)
+% (This matches ConTeXt defaults)
+
+%%% ToC (table of contents) APPEARANCE
+\usepackage[nottoc,notlof,notlot]{tocbibind} % Put the bibliography in the ToC
+\usepackage[titles,subfigure]{tocloft} % Alter the style of the Table of Contents
+\renewcommand{\cftsecfont}{\rmfamily\mdseries\upshape}
+\renewcommand{\cftsecpagefont}{\rmfamily\mdseries\upshape} % No bold!
+
+%%% END Article customizations
+
+%%% The "real" document content comes below...
+
+\title{Query Universal Interface}
+\author{Haak Saxberg and Jess Hester}
+\date{December 9, 2011} % Activate to display a given date or no date (if empty),
+         % otherwise the current date is printed 
+
+\begin{document}
+\maketitle
+
+\tableofcontents
+
+\section{Introduction}
+The need to store persistent data is a headache for many developers. Often, they encounter this problem early on, and due to time
+or budget pressure, their solution is necessarily tailored to the current realities of their applications -- with a limited view, if any, of 
+their application's future, scaled-up needs.
+
+This makes transporting an application from one storage engine to another a time-consuming and expensive affair; all too often, the
+costs associated with the migration prevent the application from migrating for an extended period of time, which generally means that
+users aren't getting 100\% use.
+
+In the past, this issue was annoying but manageable, since persistent storage was frequently implemented using relational databases.
+By the mid 90's, nearly all relational databases were mostly SQL-compliant. Every vendor, of course, had their own flavor of SQL which
+presented the eternal threat that a critical query wouldn't run on a new database, but for the most part SQL was SQL.
+
+In the modern era, companies are increasingly looking to non-relational databases as storage solutions, because they can be scaled up
+much more cost-effectively and quickly -- a must in today's data-driven business world. However, non-relational databases don't yet have
+a common language like SQL; one database's SELECT could very well be another's INSERT.
+
+Enter the Query Universal Interface (QUI).
+
+QUI attempts to ease the transition between non-relational databases, like other ORMs do for relational databases. QUI does not pretend
+to implement a universal querying syntax, but rather a universal interface through which code can talk to data with minimal, if any, change.
+
+\section{Language Overview}
+\subsection{Basic Computation}
+At its heart, QUI is a translation engine. It converts class-like data into a form that is acceptable to the supported backends. 
+\subsection{Basic Data Structures}
+QUI has two foundational elements: Models and Fields. 
+\subsection{Basic Control Structures}
+Users can fine-tune their interactions with their databases in a couple of ways:
+\begin{enumerate}
+\item Trivially, by passing in configuration arguments to the pre-created Field subclasses
+\item Defining their own fields, with custom behaviors
+\item Defining their own FieldMixins, customizing their interaction with data
+\item Defining their own ModelMixins, customizing their interaction with the databases
+\end{enumerate}
+
+\subsection{Input/Output}
+
+\subsection{Error Handling}
+QUI provides support for robust error handling at several levels.
+
+\subsection{Tool Support}
+
+
+\subsection{Alternatives to QUI}
+There are a few interfaces which share a common purpose with QUI -- the universalization of database access. None, however,
+make it their focus to unify \emph{non-relational} databases. Packages like SQLAlchemy and Django's proprietary ORM work to
+universalize access to many SQL-based relational databases, but neither officially supports non-relational databases of any sort.\\
+
+QUI attempts to address an untapped niche market; its declared purpose is unique amongst ORMs.
+
+\section{Example Programs}
+\subsection{Model Definition}
+\begin{center}
+\begin{minipage}{0.85\textwidth}
+\lstinputlisting[caption=Defining models directly]{model_definitions.py}
+\end{minipage}
+\end{center}
+
+\subsection{Getting and Putting}
+\begin{center}
+\begin{minipage}{0.85\textwidth}
+\lstinputlisting[caption=Getting from and putting to a database]{get_put_examples.py}
+\end{minipage}
+\end{center}
+\section{Language Design}
+
+\subsection{Syntax}
+QUI strives for an optimal combination of clarity and concision. 
+\subsection{Semantic Abstractions/Building Blocks}
+
+\section{Language Implementation}
+\subsection{Host Language}
+Python.
+\subsection{Parsing}
+QUI is implemented as Python methods and classes.
+\subsection{Execution}
+QUI executes as part of normal Python code.
+\section{Evaluation}
+
+
+\end{document}
