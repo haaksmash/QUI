@@ -1,28 +1,17 @@
-from decorators import *
+from models import *
+from fields import *
+from modelmixins import *
+from fieldmixins import *
 
-class StrField(object):
+
+class StrField(MDBFieldMix, StringField):
     pass
 
-class IntField(object):
+class IntField(MDBFieldMix, IntegerField):
     pass
 
-
-@stored_direct(db="mongodb", primary_key="unique_id")
-class Tester(object):
-    unique_id = 1
-    def __init__(self, age):
-        self.name = "Haak"
-        self.age = age
-
-    def __repr__(self):
-        return u"{}".format(self.name)
-
-@stored_mixin
-class Tester2(object):
-    unique_id = 3
-    def reveal(self):
-        print "not overwritten"
-        
-@stored_mixin(db="simpledb")        
-class Tester3(object):
-    pass
+class TestModel(MDBModelMix, Model):
+    def __init__(self, *args, **kwargs):
+        super(TestModel,self).__init__(*args, **kwargs)
+        self.name = StrField()
+        self.age = IntField(primary_key=True)

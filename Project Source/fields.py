@@ -11,6 +11,8 @@ import abc
 
 from decorators import OProperty
 
+from validators import *
+
 class FieldDNE(Exception):
     pass
 
@@ -46,7 +48,6 @@ class Field(object):
         raise warnings.warn("No way to delete field values",Warning)
     value = OProperty(getvalue, setvalue, delvalue, "value of this field")
 
-    @abc.abstractmethod
     def validate(self, val):
         """Ensures Python datatype/internal representation translation is valid"""
         for validator in self._validators:
@@ -66,6 +67,14 @@ class Field(object):
 
     def __init__(self, *args, **kwargs):
         self._validators = ()
+        self._value = None
+        if kwargs.has_key("primary_key"):
+            self._primary_key = True
+        else:
+            self._primary_key = False
+            
+        
+
 
 class StringField(Field):
     """ """
@@ -97,6 +106,10 @@ class StringField(Field):
             raise ValidationError(r"Could not convert to string: {}".format(self._value))
         
         return super(StringField, self).validate(val)
+    
+    def __init__(self, *args, **kwargs):
+        print "StringField's init"
+        super(StringField, self).__init__(*args, **kwargs)
 
 class IntegerField(Field):
     """Class for Intergers"""
@@ -123,6 +136,10 @@ class IntegerField(Field):
             raise ValidationError(r"Could not convert to int: {}".format(self._value))
         
         return super(IntegerField, self).validate(val)
+    
+    def __init__(self, *args, **kwargs):
+        print "IntegerField's init"
+        super(IntegerField, self).__init__(*args, **kwargs)
 
 class FloatField(Field):
     def to_python(self, value):

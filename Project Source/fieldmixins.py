@@ -4,10 +4,16 @@ Created on Nov 13, 2011
 @author: Haak Saxberg and Jess Hester
 '''
 import abc
+import os, sys
+current_dir = os.getcwd()
+#from backends.google.google.appengine.ext import db
+from bson.son import SON
+
+
+
+
 
 from fields import *
-
-from backends.google.google.appengine.ext import db
 
 class FieldMixin(object):
     """
@@ -22,10 +28,11 @@ class FieldMixin(object):
     def translate(self):
         raise NotImplementedError("This backend has no way to format data")
     
-    def __init__(self, **kwargs):
-        pass
+    def __init__(self, *args, **kwargs):
+        # need to make sure the Field ancestor's init is called
+        super(FieldMixin, self).__init__(*args, **kwargs)
     
-    
+"""
 class GFieldMix(FieldMixin):
     
     def clean(self):
@@ -38,3 +45,14 @@ class GFieldMix(FieldMixin):
             translation = db.StringProperty()
             
             return translation
+"""
+class MDBFieldMix(FieldMixin):
+    def clean(self):
+        pass
+    
+    def translate(self):
+        return self.value
+
+    
+class Test(MDBFieldMix, StringField):
+    pass
