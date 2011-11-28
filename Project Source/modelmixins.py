@@ -6,7 +6,9 @@ Created on Nov 13, 2011
 import abc
 
 from fields import Field
-from model_exceptions import ImproperlyConfigured
+from model_exceptions import *
+
+
 
 class ModelMixin(object):
     '''
@@ -18,19 +20,16 @@ class ModelMixin(object):
         pass
     
     @abc.abstractmethod
-    def get_interface(self):
+    def _get_interface(self):
         pass
     
-    @classmethod
     @abc.abstractmethod
     def get(cls, pk):
         pass
     
-    @classmethod
     @abc.abstractmethod
     def create(cls, **kwargs):
         pass
-
 
     def __init__(self, *args, **kwargs):
         '''
@@ -39,12 +38,29 @@ class ModelMixin(object):
         pass
 
 class MDBModelMix(ModelMixin):
-
-    def put(self):
-        import bson
-        import pymongo
     
-        iface = self.get_interface()
+    _fieldmixin = "MDBFieldMix"    
+    
+    @staticmethod
+    def _get_collection(self,conn):
+        import pymongo
+        try:
+            db = pymongo.database.Database(conn,self._db)
+        except:
+            raise ImproperlyConfigured()
+        try:
+            coll = db[self._collection]
+            print "found collection! {}".format(self._collection)
+        except Exception:
+            import warnings
+            warnings.warn("Not a collection: {}; creating new collection".format(self._collection), Warning) 
+            coll = pymongo.collection.Collection(db, self._collection,create=True)
+            
+        return coll
+    
+    def put(self):
+        import pymongo
+        iface = self._get_interface()
         
         conn = pymongo.Connection(host=self._host, port=self._port)
         
@@ -60,59 +76,85 @@ class MDBModelMix(ModelMixin):
             warnings.warn("Not a collection: {}; creating new collection".format(self._collection), Warning) 
             coll = pymongo.collection.Collection(db, self._collection,create=True)
             
-        coll.save(iface, manipulate=False)
+        if iface.has_key("_id"):
+            print "updating record..."
+            coll.save(iface, manipulate=False)
+        else:
+            print "creating new record..."
+            self._id = coll.save(iface, manipulate=True)
+            iface.update({"_id":self._id})
+            
+        #conn.end_request()
         return iface
     
-    def __len__(self):
-        count = 0
-        for el in self.__dict__:
-            if isinstance(self.__dict__[el], Field):
-                count += 1
-            continue
-        
-        return count
-    
-    def __iter__(self):     
-        for el in self.__dict__:
-            if isinstance(self.__dict__[el], Field):
-                yield el
-            continue
-    
-    def __getitem__(self, key):
-        if key in self.__dict__:
-            key = self.__dict__[key]
-            if isinstance(key, Field):
-                return key.value
-        return None
-    
-    def iteritems(self):
-        for key in self:
-            yield (key, self[key])
-            
-    
-    def get_interface(self):
+    def _get_interface(self):
         json = {}
-        for key,value in self.iteritems():
+        for key in dir(self):
+            # skip private and special members
+            if key[0] == "_" and (key != "_{}__id".format(self.__class__.__name__) and key != "_id"):
+                continue
+            if hasattr(getattr(self, key), "__call__"):
+                # some fields may be callable - catch their values.
+                if hasattr(getattr(self, key),"value"):
+                    value = getattr(self,key).value
+                else:
+                    continue
+            else:
+                value = getattr(self,key)
+                
+            
+            
             json.update({key:value})
         
         return json
     
-    def get(cls, pk):
-        pass
-    
-    def create(cls, **kwargs):
-        pass
-        #result = None
+    @classmethod
+    def get(cls, **kwargs):
+        from bson.objectid import ObjectId
+        import pymongo
+        conn = pymongo.Connection(host=cls._host, port=cls._port)
         
-        #result.put()
-        #return result
+        coll = MDBModelMix._get_collection(cls, conn)
+        
+        
+        if kwargs.has_key("pk"):
+            if not isinstance(kwargs["pk"], ObjectId):
+                try:
+                    spec = ObjectId(kwargs["pk"])
+                except:
+                    raise InvalidUserPK
+                
+        else:
+            spec = kwargs
+        x = coll.find(spec=spec)
+        obj = [cls.create(**y) for y in x]
+        return obj
     
+    @classmethod
+    def create(cls, **kwargs):
+        # if they have special constructor arguments...
+        if kwargs.has_key("init_args"):
+            x = cls(kwargs["init_args"])
+        else:
+            x = cls()
+        
+        #attach instance thingies
+        for key in kwargs.keys():
+            try:
+                setattr(x, key, kwargs[key])
+            except AttributeError:
+                print "can't set {}".format(key)
+        
+        #autostore created instances
+        x.put()
+        return x
+
     def __init__(self, *args, **kwargs):
         super(MDBModelMix, self).__init__(*args, **kwargs)
-        self._db = "local"
-        self._host = "localhost"
-        self._port = 27017
-        self._collection = u"{}".format(self.__class__.__name__)
+        self._db = "local" if not kwargs.has_key("dbname") else kwargs["dbname"]
+        self._host = "labrain.st.hmc.edu" if not kwargs.has_key("host") else kwargs["host"]
+        self._port = 27019 if not kwargs.has_key("port") else kwargs["port"]
+        self._collection = u"{}".format(self.__class__.__name__) if not kwargs.has_key("collection") else kwargs["collection"]
         
         
     

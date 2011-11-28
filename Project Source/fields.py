@@ -66,6 +66,11 @@ class Field(object):
         raise NotImplementedError("Translation not implemented")
 
     def __init__(self, *args, **kwargs):
+        if hasattr(self, '_fieldmixin'):
+            print "Mixin: {}".format(self._fieldmixin)
+        else:
+            print "No mixin."
+        
         self._validators = ()
         self._value = None
         if kwargs.has_key("primary_key"):

@@ -1,8 +1,7 @@
-from models import *
+from models import Model
 from fields import *
-from modelmixins import *
 from fieldmixins import *
-
+from decorators import stored
 
 class StrField(MDBFieldMix, StringField):
     pass
@@ -10,8 +9,16 @@ class StrField(MDBFieldMix, StringField):
 class IntField(MDBFieldMix, IntegerField):
     pass
 
-class TestModel(MDBModelMix, Model):
-    def __init__(self, *args, **kwargs):
-        super(TestModel,self).__init__(*args, **kwargs)
-        self.name = StrField()
-        self.age = IntField(primary_key=True)
+@stored(db="mongodb")
+class TestModel(Model):
+    id = 12345
+    name = StringField
+    
+    
+class Tester2(object):
+    id = 0
+
+    def __init__(self):
+        id = getattr(Tester2, "id")
+        self.id = id
+        setattr(Tester2, "id", id+1)

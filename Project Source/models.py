@@ -30,7 +30,7 @@ class Model(object):
 		raise NotImplementedError(u"Get not overridden")
 	
 	@abc.abstractmethod
-	def get_interface(self):
+	def _get_interface(self):
 		"""Returns an interface to the correct backend API"""
 		raise NotImplementedError(u"Get interface not overridden")
 	
@@ -42,24 +42,19 @@ class Model(object):
 	#@abc.abstractmethod
 	@property
 	def pk(self):
-		"""Gets the primary key field's value for this model"""
-		pks = []
-		for key, val in self.__class__.__dict__:
-			# only Fields can act as primary keys:
-			if not isinstance(val, Field):
-				continue
-			
-			if val._meta["pk"]:
-				pks += [val]
-		
-		# make sure there's only ONE primary key
-		if len(pks) > 1:
-			raise RuntimeError(u"Too many primary keys for {}".format(self))
-
-		return pks[0].value
-
+		#Gets the primary key field's value for this model
+		try:
+			return getattr(self, self._pk_name)
+		except:
+			return None
+	
+	
+	@property
+	def _pk_name(self):
+		return "_id"
+	
 	def __repr__(self):
-		return u"QUI Model: {}".format(self.__class__.__name__)
+		return u"<QUI Model: {}>".format(self.__class__.__name__)
 
 
 class ModelInstance():
