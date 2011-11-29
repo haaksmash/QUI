@@ -40,7 +40,7 @@ class ModelMixin(object):
 class MDBModelMix(ModelMixin):
     
     _fieldmixin = "MDBFieldMix"    
-
+    _port = 27017
     
     @classmethod
     def _collection(cls):
@@ -50,7 +50,6 @@ class MDBModelMix(ModelMixin):
     
     @staticmethod
     def _get_collection(self,conn):
-        #self._collection = self.__class__.__name__
         import pymongo
         try:
             db = pymongo.database.Database(conn,self._db)
@@ -71,18 +70,9 @@ class MDBModelMix(ModelMixin):
         iface = self._get_interface()
         
         conn = pymongo.Connection(host=self._host, port=self._port)
-        
-        try:
-            db = pymongo.database.Database(conn,self._db)
-        except:
-            raise ImproperlyConfigured()
-        try:
-            coll = db[self._collection()]
-            print "found collection! {}".format(self._collection())
-        except Exception:
-            import warnings
-            warnings.warn("Not a collection: {}; creating new collection".format(self._collection), Warning) 
-            coll = pymongo.collection.Collection(db, self._collection(),create=True)
+       
+
+        coll = self._get_collection(self, conn)
             
         if iface.has_key("_id"):
             print "updating record..."
@@ -120,6 +110,7 @@ class MDBModelMix(ModelMixin):
     def get(cls, **kwargs):
         from bson.objectid import ObjectId
         import pymongo
+        
         conn = pymongo.Connection(host=cls._host, port=cls._port)
         
         coll = MDBModelMix._get_collection(cls, conn)

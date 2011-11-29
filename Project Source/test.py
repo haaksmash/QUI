@@ -5,8 +5,6 @@ from decorators import stored
 @stored()
 class MongoModel(Model):
     _backend = "mongodb"
-    _port = 1030123
-
 
 class FileModel(MongoModel):
     count = 0
@@ -19,7 +17,7 @@ class FileModel(MongoModel):
         FileModel.count += 1
 
 class MongoLocal(MongoModel):
-    _port = 27017
+    _port = 27018
      
 class LocalFile(MongoLocal):
     pass
@@ -29,5 +27,5 @@ class LocalFile(MongoLocal):
 class OtherMongo(Model):
     pass
 
-class OtherFile(OtherMongo):
+class TestModel(OtherMongo):
     pass

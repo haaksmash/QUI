@@ -60,8 +60,11 @@ def stored(cls=None, **kwargs):
             mixins = [MDBModelMix]+mixins
     else:
         kwargs['backend'] = None
-        
-    def wrapper(cls):
+       
+
+    # we can pass in what we like to the returned function,
+    # since it's a decorator!
+    def wrapper(cls, mixins=mixins,kwargs=kwargs):
         if hasattr(cls, "_backend"):
             mixins = [get_backend(getattr(cls, "_backend"))]
         elif not kwargs['backend']:
@@ -77,10 +80,12 @@ def stored(cls=None, **kwargs):
         
         if not hasattr(cls, "_fieldmixin"):
             raise ImproperlyConfigured("No fieldmixin defined: {}".format(cls.__name__))
-        
-        #print "Creating a {} with fieldmixin {}".format(cls.__name__, cls._fieldmixin)
+       
+        # Having identified the fieldmixin for this class,
+        # put said mixin into all of the Field subclasses
+        # we can find, but don't initialize them just yet.
+        fields_to_init = {}
         for key in dir(cls):
-            #print key               
             try:
                 if not Field in getattr(cls, key).__bases__:
                     continue
@@ -91,8 +96,10 @@ def stored(cls=None, **kwargs):
             class NewF(MDBFieldMix, f):
                 pass
             
-            setattr(cls, key, NewF())
-        
+            fields_to_init[key] = NewF
+        if fields_to_init != {}:
+            kwargs['_fields_to_init'] = fields_to_init
+
         # where is the model stored?
         if kwargs.has_key("db"):
             setattr(cls, "_db", kwargs["db"])
@@ -102,35 +109,39 @@ def stored(cls=None, **kwargs):
         if kwargs.has_key("host"):
             setattr(cls, "_host", kwargs["host"])
         elif not hasattr(cls, "_host"):
-            setattr(cls, "_host", "labrain.st.hmc.edu")
+            setattr(cls, "_host", "localhost")
             
         if kwargs.has_key("port"):
             setattr(cls, "_db", int(kwargs["port"]))
         elif not hasattr(cls, "_port"):
-            setattr(cls, "_port", 27019)
+            raise ImproperlyConfigured("no port for model:{}".format(cls.__name__)) 
         
+        # alter the class's __init__, as necessary,
+        # to initialize any Fields that we encountered above.
         oldinit = cls.__init__
         def newinit(self, *args, **kwargs):
+            if kwargs.has_key('_fields_to_init'):
+                _fields_to_init = kwargs.pop('_fields_to_init')
+            else:
+                _fields_to_init = None
+            
             oldinit(self, *args, **kwargs)
-            #self._collection = self.__class__.__name__
+            
+            # initialize fields!
+            if _fields_to_init != None:
+                for key, value in _fields_to_init:
+                    setattr(self, key, value())
+
+
         cls.__init__ = newinit
-        """
-        clsnew = cls.__new__
-        def newnew(cls, *args, **kwargs):
-            cls = clsnew(cls, *args, **kwargs)
-            setattr(cls, "_collection", cls.__name__)
-            return cls
-        cls.__new__ = newnew
-        """
+        
         return cls
     return wrapper
 
 
-class ClassProperty(property):
-    def __get__(self, cls, owner):
-        return self.fget.__get__(None, owner)()
-
 def primary_key(cls):
+    """Marks a field as a primary key.
+    """
     oldinit = cls.__init__
     def newinit(self, *args, **kwargs):
         oldinit()
