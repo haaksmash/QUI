@@ -1,24 +1,33 @@
 from models import Model
 from fields import *
-from fieldmixins import *
 from decorators import stored
 
-class StrField(MDBFieldMix, StringField):
-    pass
+@stored()
+class MongoModel(Model):
+    _backend = "mongodb"
+    _port = 1030123
 
-class IntField(MDBFieldMix, IntegerField):
-    pass
 
-@stored(db="mongodb")
-class TestModel(Model):
-    id = 12345
-    name = StringField
+class FileModel(MongoModel):
+    count = 0
     
+    def to_readable(self):
+        return u"{}".format(self.size)
     
-class Tester2(object):
-    id = 0
-
     def __init__(self):
-        id = getattr(Tester2, "id")
-        self.id = id
-        setattr(Tester2, "id", id+1)
+        super(FileModel, self).__init__()
+        FileModel.count += 1
+
+class MongoLocal(MongoModel):
+    _port = 27017
+     
+class LocalFile(MongoLocal):
+    pass
+
+    
+@stored(backend="mongodb", host="labrain.st.hmc.edu")
+class OtherMongo(Model):
+    pass
+
+class OtherFile(OtherMongo):
+    pass

@@ -7,7 +7,7 @@ import abc
 
 from fields import Field
 from model_exceptions import *
-
+from decorators import ClassProperty
 
 
 class ModelMixin(object):
@@ -40,9 +40,17 @@ class ModelMixin(object):
 class MDBModelMix(ModelMixin):
     
     _fieldmixin = "MDBFieldMix"    
+
+    
+    @classmethod
+    def _collection(cls):
+        if isinstance(cls, MDBModelMix):
+            return cls.__class__._collection()
+        return u"{}".format(cls.__name__)
     
     @staticmethod
     def _get_collection(self,conn):
+        #self._collection = self.__class__.__name__
         import pymongo
         try:
             db = pymongo.database.Database(conn,self._db)
@@ -50,11 +58,11 @@ class MDBModelMix(ModelMixin):
             raise ImproperlyConfigured()
         try:
             coll = db[self._collection]
-            print "found collection! {}".format(self._collection)
+            print "found collection! {}".format(self._collection())
         except Exception:
             import warnings
             warnings.warn("Not a collection: {}; creating new collection".format(self._collection), Warning) 
-            coll = pymongo.collection.Collection(db, self._collection,create=True)
+            coll = pymongo.collection.Collection(db, self._collection(),create=True)
             
         return coll
     
@@ -69,12 +77,12 @@ class MDBModelMix(ModelMixin):
         except:
             raise ImproperlyConfigured()
         try:
-            coll = db[self._collection]
-            print "found collection! {}".format(self._collection)
+            coll = db[self._collection()]
+            print "found collection! {}".format(self._collection())
         except Exception:
             import warnings
             warnings.warn("Not a collection: {}; creating new collection".format(self._collection), Warning) 
-            coll = pymongo.collection.Collection(db, self._collection,create=True)
+            coll = pymongo.collection.Collection(db, self._collection(),create=True)
             
         if iface.has_key("_id"):
             print "updating record..."
@@ -151,10 +159,11 @@ class MDBModelMix(ModelMixin):
 
     def __init__(self, *args, **kwargs):
         super(MDBModelMix, self).__init__(*args, **kwargs)
-        self._db = "local" if not kwargs.has_key("dbname") else kwargs["dbname"]
-        self._host = "labrain.st.hmc.edu" if not kwargs.has_key("host") else kwargs["host"]
-        self._port = 27019 if not kwargs.has_key("port") else kwargs["port"]
-        self._collection = u"{}".format(self.__class__.__name__) if not kwargs.has_key("collection") else kwargs["collection"]
+        self._db = self.__class__._db if not kwargs.has_key("dbname") else kwargs["dbname"]
+        self._host = self.__class__._host if not kwargs.has_key("host") else kwargs["host"]
+        self._port = self.__class__._port if not kwargs.has_key("port") else kwargs["port"]
+        if kwargs.has_key("collection"):
+            self._collection = kwargs["collection"]
         
         
     
