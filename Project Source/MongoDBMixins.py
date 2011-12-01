@@ -8,6 +8,9 @@ from modelmixins import ModelMixin
 from fieldmixins import FieldMixin
 from model_exceptions import *
 
+import pymongo
+from bson.objectid import ObjectId
+
 class MongoDBModelMix(ModelMixin):
     
     _fieldmixin = "MDBFieldMix"    
@@ -21,7 +24,7 @@ class MongoDBModelMix(ModelMixin):
     
     @staticmethod
     def _get_collection(self,conn):
-        import pymongo
+        
         try:
             db = pymongo.database.Database(conn,self._db)
         except:
@@ -37,7 +40,6 @@ class MongoDBModelMix(ModelMixin):
         return coll
     
     def put(self):
-        import pymongo
         iface = self._get_interface()
         
         conn = pymongo.Connection(host=self._host, port=self._port)
@@ -79,9 +81,6 @@ class MongoDBModelMix(ModelMixin):
     
     @classmethod
     def get(cls, **kwargs):
-        from bson.objectid import ObjectId
-        import pymongo
-        
         conn = pymongo.Connection(host=cls._host, port=cls._port)
         
         coll = MongoDBModelMix._get_collection(cls, conn)

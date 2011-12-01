@@ -22,7 +22,22 @@ class AppEngineModelMix(ModelMixin):
     
     @classmethod
     def create(cls, **kwargs):
-        pass
+        # if they have special constructor arguments...
+        if kwargs.has_key("init_args"):
+            x = cls(**kwargs["init_args"])
+        else:
+            x = cls()
+        
+        #attach instance thingies
+        for key in kwargs.keys():
+            try:
+                setattr(x, key, kwargs[key])
+            except AttributeError:
+                print "can't set {}".format(key)
+        
+        #autostore created instances
+        #x.put()
+        return x
 
     def __init__(self, *args, **kwargs):
         super(AppEngineModelMix, self).__init__(*args, **kwargs)

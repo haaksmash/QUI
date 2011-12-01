@@ -4,8 +4,13 @@ from utils import get_mixin
 from settings import SUPPORTED_BACKENDS
 
 def stored(cls=None, **kwargs):
-    """
+    """Modifies a class for use with QUI's mixins
     
+        Accepts arbitrary keyword arguments, but only acts on
+        backend = None
+        db = "localhost"
+        port = backend-specific-default
+        host = "local"
     """
     mixins = {}
     if kwargs.has_key('backend'):

@@ -1,16 +1,8 @@
 % !TEX TS-program = pdflatex
 % !TEX encoding = UTF-8 Unicode
-
-% This is a simple template for a LaTeX document using the "article" class.
-% See "book", "report", "letter" for other types of document.
-
 \documentclass{article} % use larger type; default would be 10pt
 
 \usepackage[utf8]{inputenc} % set input encoding (not needed with XeLaTeX)
-
-%%% Examples of Article customizations
-% These packages are optional, depending whether you want the features they provide.
-% See the LaTeX Companion or other references for full information.
 
 %%% PAGE DIMENSIONS
 \usepackage{geometry} % to change the page dimensions
@@ -29,7 +21,6 @@
 \usepackage{paralist} % very flexible & customisable lists (eg. enumerate/itemize, etc.)
 \usepackage{verbatim} % adds environment for commenting out blocks of text & for better verbatim
 \usepackage{subfig} % make it possible to include more than one captioned figure/table in a single float
-% These packages are all incorporated in the memoir class to one degree or another...
 
 \usepackage[usenames,dvipsnames]{color}
 \usepackage{textcomp}
@@ -59,6 +50,33 @@ stringstyle=\color{red}\ttfamily,
 upquote=true
 }
 
+\makeatletter
+\lst@AddToHook{TextStyle}{\let\lst@basicstyle\ttfamily\normalsize\fontfamily{pcr}\selectfont}
+\makeatother
+
+\newcommand{\il}[1]{\lstinline{#1}}
+\newcommand{\lstslice}[3]{
+\begin{center}
+\begin{minipage}{0.85\textwidth}
+\lstinputlisting[linerange={#1-#2}, firstnumber=#1]{#3}
+\end{minipage}
+\end{center}
+}
+\usepackage{xargs}
+\newcommandx{\lstdump}[3][1=1,2=No Caption]{
+\begin{center}
+\begin{minipage}{0.85\textwidth}
+\newcommand{\storelstname}{\lstlistingname}
+\newcommand{\storelstlisting}{\thelstlisting}
+\renewcommand{\lstlistingname}{#1}
+\renewcommand{\thelstlisting}{}
+\lstinputlisting[caption=#2, ]{#3}
+\renewcommand{\lstlistingname}{\storelstname}
+\renewcommand{\thelstlisting}{\storelstlisting}
+\end{minipage}
+\end{center}
+}
+
 %%% HEADERS & FOOTERS
 \usepackage{fancyhdr} % This should be set AFTER setting up the page geometry
 \pagestyle{fancy} % options: empty , plain , fancy
@@ -83,14 +101,14 @@ upquote=true
 
 \title{Query Universal Interface}
 \author{Haak Saxberg and Jess Hester}
-\date{December 9, 2011} % Activate to display a given date or no date (if empty),
-         % otherwise the current date is printed 
+\date{December 9, 2011}
 
 \begin{document}
 \maketitle
-
+\newpage
 \tableofcontents
 
+\newpage
 \section{Introduction}
 The need to store persistent data is a headache for many developers. Often, they encounter this problem early on, and due to time
 or budget pressure, their solution is necessarily tailored to the current realities of their applications -- with a limited view, if any, of 
@@ -115,7 +133,7 @@ to implement a universal querying syntax, but rather a universal interface throu
 
 \section{Language Overview}
 \subsection{Basic Computation}
-At its heart, QUI is a translation engine. It converts class-like data into a form that is acceptable to the supported backends. 
+At its heart, QUI is a translation engine. It converts class-like data into a form that is understandable to a backend's API.
 \subsection{Basic Data Structures}
 QUI has two foundational elements: Models and Fields. 
 \subsection{Basic Control Structures}
@@ -144,32 +162,78 @@ QUI attempts to address an untapped niche market; its declared purpose is unique
 
 \section{Example Programs}
 \subsection{Model Definition}
-\begin{center}
-\begin{minipage}{0.85\textwidth}
-\lstinputlisting[caption=test.py - Defining models directly]{model_definitions.py}
-\end{minipage}
-\end{center}
+Here's what it might look like if you wanted to define a simple model:
+\lstdump[test.py][defining a simple model]{model_definitions.py}
+
+Let's step through this definition. First, we import the necesassary things from qui:
+\lstslice{1}{3}{model_definitions.py}
+\il{qui.fields} contains all the supported field types, like \il{StringField, IntegerField}, etc. At the moment, QUI supports 
+a bare minimum of fields - just the most basic types.
+
+Next, we decorate the class with \il{storage()}:
+
+\lstslice{5}{6}{model_definitions.py}
+
+the \il{backend} keyword argument to the \il{storage} decorator tells QUI which mixins it needs to add to your model's inheritance tree,
+as well as the inheritance trees of any \il{Fields} you've defined for the model. \il{storage} will accept arbitrary keyword arguments,
+but only acts on a few:
+\begin{enumerate}
+	\item \il{backend}, which defaults to \il{None} and will (generally) raise an \il{ImproperlyConfigured} exception if not defined, or
+	if you pass in a backend-identifying string that isn't recognized.
+	\item \il{host}, which takes a string and defaults to \il{'localhost'}.
+	\item \il{db}, which takes a string and defaults to a backend-specific value.
+	\item \il{port}, which takes an integer, and defaults to a backend-specific port.
+\end{enumerate}
+Our simple \il{FileModel}, then, uses the AppEngine backend, and will be stored locally, with default settings. Any subclasses of \il{FileModel}
+will automatically inherit these settings, but fine control is possible by defining \il{_host, _db, _port} on the subclass in question.
+
+Next, we set some fields that we think a \il{FileModel} should have:
+\lstslice{17}{24}{model_definitions.py}
+Notice that we don't \emph{initialize} any of the fields here - we're just defining what kind of \il{Field} each attribute should be.
+Although QUI will store any attributes that an instance of \il{FileModel} may have (except private ones and callable ones), these
+\il{Field} attributes will do run-time compatibility checking. For example:
+\lstdump[Session 1][demonstrating run-time validation]{interpreter2.py}
+Also, notice that you can still have ``regular'' class variables, like \il{class_var}; these will be stored by QUI just like all other non-callable
+attributes.
+
+Finally, we have a (pedantic) function definition, just to show that we can:
+\lstslice{26}{28}{model_definitions.py}
+Since \il{my_size} is a callable, QUI ignores it - but doesn't remove it from the model.
+\lstdump[Session 2][using fields with functions]{interpreter1.py}
 
 \subsection{Using QUI}
 QUI's ease of use is best exhibited by entering the Python interpreter:
-\begin{center}
-\begin{minipage}{0.85\textwidth}
-\lstinputlisting[caption=Getting from and putting to a database]{get_put_examples.py}
-\end{minipage}
-\end{center}
+\lstdump[Session 3][getting and putting]{getting_and_setting.py}
+
 \section{Language Design}
 
 \subsection{Getting, Putting, and Creating}
+The idea behind QUI is to support a uniform set of `verbs' across all backends. As an internal language focusing on storage, we implemented
+these verbs as class methods and instance methods.
+
+Since our time for this project was limited, we focused our efforts on what we saw as the three most important verbs for a persistent storage solution:
+\begin{enumerate}
+\item \textbf{Creating} an instance of a stored model, at run-time, on the fly, and having it stored into the backend.
+\item \textbf{Putting} an instance of a stored model into the backend.
+\item \textbf{Getting} an instance of a stored model from the data stored in the backend.
+\end{enumerate}
+
 
 \subsection{Syntax}
-QUI strives for an optimal combination of clarity and concision. 
+QUI strives for an optimal combination of clarity and concision. It achieves this by only officially exposing three extra methods on stored models: \il{get()}, \il{create()}, and \il{put()}.
 \subsection{Semantic Abstractions/Building Blocks}
 
 \section{Language Implementation}
 \subsection{Host Language}
-Python.
+QUI is implemented in Python, which was chosen for three main reasons:
+\begin{enumerate}
+\item Our own familiarity with it.
+\item Excellent metaprogramming facilities.
+\item Availability of backend APIs
+\end{enumerate}
 \subsection{Parsing}
-QUI is implemented as Python methods and classes.
+As an internal DSL, QUI doesn't do `parsing', in the same sense as an external one --- there's no need for an abstract syntax tree, and we can rely on Python to catch syntactically 
+illegal expressions in many cases.
 \subsection{Execution}
 QUI executes as part of normal Python code.
 \section{Evaluation}

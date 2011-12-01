@@ -5,55 +5,26 @@ from decorators.storage_decorators import stored
 
 from datetime import date
 
-class StrField(MongoDBFieldMix, StringField):
-    pass
-
-
-@stored(backend='test')
-class MongoModel(Model):
-    pass
-
-class FileModel(MongoModel):
-    count = 0
-    
-    name = StringField
-    path = StringField
-    dateadded = DateField
-    size = IntegerField
-    genre = StringField
-    
-    safe = BooleanField
-    
-    def to_readable(self):
-        return self.size
-    
-    def __init__(self, path=None, date=None, size=None):
-        super(FileModel, self).__init__()
-        FileModel.count += 1
-        self.size = size
-        self.path = path
-        self.date = date
-
-
-class MongoLocal(MongoModel):
-    _port = 27018
-     
-class LocalFile(MongoLocal):
-    pass
-
-    
 @stored(backend="AppEngine")
-class AEModel(Model):
-    pass
-
-class TestModel(AEModel):
+class FileModel(Model):
+    """ A simple file model.
+    
+    This model inherits directly from a supplied mixin - in this case, one that
+    enables the model to talk to Google's AppEngine database.
+    
+    If your backend changes, the only code you need to change for this model is
+    the the decorator argument - instead of "AppEngine", put "MongoDB" 
+    (for example), or whatever is appropriate for your backend.
+    """
+    
     name = StringField
-
-    def __init__(self):
-        super(TestModel, self).__init__()
-        
-        
-        
-x = FileModel()
-print x.to_readable()
-        
+    size = IntegerField
+    filetype = StringField
+    notes = StringField
+    created = DateField
+    is_safe = BooleanField
+    
+    def my_size(self):
+        """ A function specific to this model, unmanaged by QUI """
+        return u"{} bytes".format(self.size)
+    
