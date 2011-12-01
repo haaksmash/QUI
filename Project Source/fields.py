@@ -9,7 +9,7 @@ import re
 import abc
 
 
-from decorators import OProperty
+from decorators.OProperty import OProperty
 
 from validators import *
 
@@ -66,11 +66,6 @@ class Field(object):
         raise NotImplementedError("Translation not implemented")
 
     def __init__(self, *args, **kwargs):
-        if hasattr(self, '_fieldmixin'):
-            print "Mixin: {}".format(self._fieldmixin)
-        else:
-            print "No mixin."
-        
         self._validators = ()
         self._value = None
         if kwargs.has_key("primary_key"):
@@ -113,7 +108,6 @@ class StringField(Field):
         return super(StringField, self).validate(val)
     
     def __init__(self, *args, **kwargs):
-        print "StringField's init"
         super(StringField, self).__init__(*args, **kwargs)
 
 class IntegerField(Field):
@@ -135,15 +129,15 @@ class IntegerField(Field):
         self._value=None
 
     def validate(self, val):
-        try:
-            self._value = int(self._value)
-        except Exception, e:
-            raise ValidationError(r"Could not convert to int: {}".format(self._value))
+        if val is not None:
+            try:
+                int(val)
+            except Exception:
+                raise ValidationError(r"Could not convert to int: {}".format(val))
         
         return super(IntegerField, self).validate(val)
     
     def __init__(self, *args, **kwargs):
-        print "IntegerField's init"
         super(IntegerField, self).__init__(*args, **kwargs)
 
 class FloatField(Field):
@@ -164,10 +158,9 @@ class FloatField(Field):
 
     def validate(self, val):
         try:
-            self._value = float(self._value)
-        except Exception, e:
-            raise ValidationError(r"Could not convert to float: {}".format(self._value))
-        
+            float(val)
+        except Exception:
+            raise ValidationError(r"Could not convert to float: {}".format(val))
         return super(FloatField, self).validate(val)
 
 class BooleanField(Field):
@@ -188,9 +181,9 @@ class BooleanField(Field):
 
     def validate(self, val):
         try:
-            value = bool(val)
-        except Exception, e:
-            raise ValidationError(r"Could not convert to boolean: {}".format(self._value))
+            bool(val)
+        except Exception:
+            raise ValidationError(r"Could not convert to boolean: {}".format(val))
         
         return super(BooleanField, self).validate(val)
         
@@ -232,17 +225,20 @@ class DateField(Field):
         self._value = None
 
     def validate(self, val):
-        if isinstance(val, str):
+        print type(val)
+        if isinstance(val, datetime.date):
+            return True
+        elif isinstance(val, str):
             try:
                 datetime.datetime.strptime(val, "%d/%m/%Y").date()
-            except ValueError, e:
+            except ValueError:
                 raise ValidationError(r"Couldn't coerce into a date: {}".format(val))
         elif isinstance(val, int):
             try:
                 datetime.datetime.utcfromtimestamp(val).date()
-            except ValueError, e:
+            except ValueError:
                 raise ValidationError(r"Not a valid timestamp: {}".format(val))
-        elif not ansi_date_re.search(val):
+        elif not DateField.ansi_date_re.search(val):
             raise ValidationError("Not a valid date: {}".format(val))
         else:
             raise ValidationError(r"Could not create a date object: {}".format(val))

@@ -11,9 +11,8 @@ from fields import Field
 class Model(object):
 	"""Abstract base class for universal model objects
 
-	Keyword arguments:
-	kwargs -- undetermined
-
+	This class defines the interface for all stored models; anything that
+	aspires to be a QUI model has to satisfy these abstract methods.
 	"""
 	__metaclass__ = abc.ABCMeta
 	
@@ -55,16 +54,3 @@ class Model(object):
 	
 	def __repr__(self):
 		return u"<QUI Model: {}>".format(self.__class__.__name__)
-
-
-class ModelInstance():
-	__metaclass__ = abc.ABCMeta
-	
-	@abc.abstractmethod
-	def put(self):
-		pass
-
-	@abc.abstractmethod
-	def delete(self):
-		pass
-	
