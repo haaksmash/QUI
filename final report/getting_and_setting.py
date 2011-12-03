@@ -1,9 +1,10 @@
  $ python -i FileModel.py
  >>> f = FileModel.create(
- ... title="Greenboy",
- ... size=100,)
+ ... name="arrow.jpg",
+ ... size=100,
+     title="Greenboy")
  >>> f
- <QUI Model: FileModel>
+ <FileModel: arrow.jpg>
  >>> f.title
  'Greenboy'
  >>> f.size

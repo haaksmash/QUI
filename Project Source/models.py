@@ -5,8 +5,11 @@ Created on Nov 10, 2011
 '''
 import abc
 
-from model_exceptions import *
-from fields import Field
+from quiexceptions.model_exceptions import *
+#from fields import Field
+
+from utils import force_unicode, smart_str
+
 
 class Model(object):
 	"""Abstract base class for universal model objects
@@ -53,4 +56,13 @@ class Model(object):
 		return "_id"
 	
 	def __repr__(self):
-		return u"<QUI Model: {}>".format(self.__class__.__name__)
+		try:
+			u = unicode(self)
+		except (UnicodeEncodeError, UnicodeDecodeError):
+			u = '[Bad Unicode data]'
+		return smart_str(u'<{}: {}>'.format(self.__class__.__name__, u))
+
+	def __str__(self):
+		if hasattr(self, '__unicode__'):
+			return force_unicode(self).encode('utf-8')
+		return '{} object'.format(self.__class__.__name__)

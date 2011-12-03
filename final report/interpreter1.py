@@ -1,7 +1,9 @@
  $ python -i FileModel.py
  >>> f = FileModel()
  >>> f
- <QUI Model: FileModel>
+ <FileModel: Unnamed File>
+ >>> print f
+ Unnamed File
  >>> isinstance(f, FileModel)
  True
  >>> f.size

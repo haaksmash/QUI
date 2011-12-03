@@ -5,7 +5,7 @@ Created on Nov 13, 2011
 '''
 import abc
 
-from model_exceptions import *
+from quiexceptions.model_exceptions import *
 
 
 class ModelMixin(object):
@@ -20,6 +20,8 @@ class ModelMixin(object):
         """ Convenience method to get at Fields directly, if necessary """
         if self._field_names.has_key(name):
             return self._field_names[name]
+        elif self._class_fields.has_key(name):
+            return self._class_fields[name]
         else:
             return object.__getattribute__(self, name)
 
@@ -38,6 +40,8 @@ class ModelMixin(object):
             
         if name in object.__getattribute__(self,"_field_names").keys():
             return object.__getattribute__(self, "_field_names")[name].value
+        elif name in object.__getattribute__(self, "_class_fields").keys():
+            return object.__getattribute__(self, "_class_fields")[name].value
         else:
             return object.__getattribute__(self, name)
 
@@ -48,6 +52,8 @@ class ModelMixin(object):
         """
         if name != "_field_names" and name in self._field_names.keys():
             object.__getattribute__(self,"_field_names")[name].value = value
+        elif name in object.__getattribute__(self, "_class_fields").keys():
+            object.__getattribute__(self, "_class_fields")[name].value = value
         else:
             return object.__setattr__(self, name, value)
 

@@ -6,7 +6,7 @@ Created on Nov 13, 2011
 from fields import Field
 from modelmixins import ModelMixin
 from fieldmixins import FieldMixin
-from model_exceptions import *
+from quiexceptions.model_exceptions import *
 
 class AppEngineModelMix(ModelMixin):
     _port = 80808

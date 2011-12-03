@@ -19,6 +19,9 @@ class FieldDNE(Exception):
 class ValidationError(ValueError):
     pass
 
+class ClassField(object):
+    pass
+
 class Field(object):
     """Abstract base class for universal field objects (UFOs)
         
@@ -112,6 +115,23 @@ class StringField(Field):
 
 class IntegerField(Field):
     """Class for Intergers"""
+    def __iadd__(self, value):
+        #print "IntegerField +="
+        if self.validate(value):
+            if self._value == None:
+                self._value = int(value)
+            else:
+                self._value += int(value) 
+        return self 
+    
+    def __add__(self, value):
+        if self.validate(value):
+            if self._value == None:
+                self._value = int(value)
+            else:
+                self._value += int(value) 
+        return self
+    
     def to_python(self, value):
         if value is None: 
             return value

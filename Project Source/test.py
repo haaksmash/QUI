@@ -1,9 +1,9 @@
 from models import Model
 from fields import StringField, DateField, IntegerField, BooleanField
-from MongoDBMixins import MongoDBFieldMix
 from decorators.storage_decorators import stored
+from decorators.field_decorators import class_field
 
-from datetime import date
+import AppEngineMixins
 
 @stored(backend="AppEngine")
 class FileModel(Model):
@@ -16,6 +16,7 @@ class FileModel(Model):
     the the decorator argument - instead of "AppEngine", put "MongoDB" 
     (for example), or whatever is appropriate for your backend.
     """
+    count = class_field(IntegerField)
     
     name = StringField
     size = IntegerField
@@ -29,13 +30,21 @@ class FileModel(Model):
         return u"{} bytes".format(self.size)
     
     def __init__(self):
+        FileModel.count += 1
         self.size = 100
         
-
+    def __unicode__(self):
+        if self.name:
+            return u"{}".format(self.name)
+        else:
+            return u"{}".format("Unnamed File")
+@stored()
 class FMSub(FileModel):
     purple = BooleanField
     _host = "google.com"
     
+    count = class_field(IntegerField)
+    
     def __init__(self):
-        super(FMSub, self).__init__(self)
+        FMSub.count += 1
         self.purple = False
