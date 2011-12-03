@@ -28,3 +28,14 @@ class FileModel(Model):
         """ A function specific to this model, unmanaged by QUI """
         return u"{} bytes".format(self.size)
     
+    def __init__(self):
+        self.size = 100
+        
+
+class FMSub(FileModel):
+    purple = BooleanField
+    _host = "google.com"
+    
+    def __init__(self):
+        super(FMSub, self).__init__(self)
+        self.purple = False

@@ -29,6 +29,13 @@ class ModelMixin(object):
         
         Behaves normally for non-Field attributes.
         """
+        # ensure that _field_names is a thing
+        # (it might not be, on subclasses of user Models)
+        try: 
+            object.__getattribute__(self, "_field_names")
+        except AttributeError:
+            self._field_names = {}
+            
         if name in object.__getattribute__(self,"_field_names").keys():
             return object.__getattribute__(self, "_field_names")[name].value
         else:

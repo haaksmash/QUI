@@ -29,8 +29,8 @@ def stored(cls=None, **kwargs):
             mixins['backend'] = get_mixin(getattr(cls, "_backend"))
         elif not kwargs["backend"]:
             raise ImproperlyConfigured("No backend defined: {}".format(cls.__name__))
-        elif kwargs["backend"] not in SUPPORTED_BACKENDS:
-            raise ImproperlyConfigured("Backend not supported: {}".format(kwargs["backend"]))
+        #elif kwargs["backend"] not in SUPPORTED_BACKENDS:
+        #    raise ImproperlyConfigured("Backend not supported: {}".format(kwargs["backend"]))
         
         
         # add mixins as necessary - potentially more than one
@@ -65,13 +65,16 @@ def stored(cls=None, **kwargs):
         # alter the class's __init__, as necessary,
         oldinit = cls.__init__
         def newinit(self, QUIARGS=kwargs, *args, **kwargs):
-            if QUIARGS.has_key('_fields_to_init'):
+            print "Entering Modified init..."
+            # make sure that QUIARGS is actually a dict-like object
+            # if we're modifying the init of a subclass of a Model, it's the subclass.
+            if isinstance(QUIARGS, dict) and QUIARGS.has_key('_fields_to_init'):
                 _fields_to_init = QUIARGS['_fields_to_init']
             else:
                 _fields_to_init = {}
             #print dir(self)
             self._field_names = {}
-            oldinit(self, *args, **kwargs)
+            
             
             
             for key in dir(self):
@@ -92,6 +95,8 @@ def stored(cls=None, **kwargs):
                 
                 self._field_names[key] = NewF()
                 #delattr(self, key)
+            print "returning to user-defined init..."
+            oldinit(self, *args, **kwargs)
             #print _fields_to_init            
             
             

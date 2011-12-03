@@ -141,14 +141,18 @@ Users can fine-tune their interactions with their databases in a couple of ways:
 \begin{enumerate}
 \item Trivially, by passing in configuration arguments to the pre-created Field subclasses
 \item Defining their own fields, with custom behaviors
-\item Defining their own FieldMixins, customizing their interaction with data
+\item Defining their own FieldMixins, customizing data requirements of the 
 \item Defining their own ModelMixins, customizing their interaction with the databases
 \end{enumerate}
 
 \subsection{Input/Output}
 
 \subsection{Error Handling}
-QUI provides support for robust error handling at several levels.
+QUI provides support for robust error handling. QUI defines several custom subclasses of \il{Exception}, so that the
+user can be informed about exactly what QUI thinks has gone wrong, and where, and with what values.
+QUI implements a few ``levels'' of exception, insofar as Python supports ``levels'' of program running. At the ``compilation'' level, QUI
+raises \il{ImproperlyConfigured} exceptions for any settings that are not valid or missing, with appropriate error messages alongside.
+
 
 \subsection{Tool Support}
 
@@ -163,8 +167,9 @@ QUI attempts to address an untapped niche market; its declared purpose is unique
 \section{Example Programs}
 \subsection{Model Definition}
 Here's what it might look like if you wanted to define a simple model:
-\lstdump[test.py][defining a simple model]{model_definitions.py}
+\lstdump[filemodel.py][defining a simple model]{model_definitions.py}
 
+\subsubsection{Step-by-step}
 Let's step through this definition. First, we import the necesassary things from qui:
 \lstslice{1}{3}{model_definitions.py}
 \il{qui.fields} contains all the supported field types, like \il{StringField, IntegerField}, etc. At the moment, QUI supports 
@@ -201,9 +206,23 @@ Finally, we have a (pedantic) function definition, just to show that we can:
 Since \il{my_size} is a callable, QUI ignores it - but doesn't remove it from the model.
 \lstdump[Session 2][using fields with functions]{interpreter1.py}
 
+\subsubsection{Subclassing a Model}
+\lstdump[file\_subclasses.py][subclassing from FileModel]{subclassing.py}
+This is just an example of a few ways that you can customize your QUI models. \il{ImageFile} is a direct subclass of \il{FileModel}, and has no further customizations.
+QUI will store it instances of \il{ImageFile} in a different `place' than it does instances of \il{FileModel}, if that makes sense for the backend.
+
+\il{TextFile} shows that you can define further \il{Field}s or regular class member variables, as you'd expect from a subclass.
+
+\il{Remote_File} exhibits the ability to redefine where the model should be stored, by customizing \il{_host} and \il{_port} members. The difference between defining them as class members and as instance members is subtle: all QUI functions will use the class member values, if they exist; only \il{put()} will use the instance values. So, \il{Remote_Files} will be \textbf{gotten} from the wherever \il{FileModel} has said to find them, but will be \textbf{put} to wherever \il{_host} has been initialized to. In this case, if \il{x = Remote_File.create(host='otherhost')}, it will be \il{create}d to \il{FileModel}'s host (localhost), but on port \il{91711}. \il{x.put()}, however, will store it on otherhost, also using port \il{91711}. This feature is great for migrating data between hosts; you'll be \il{get()}ing from one host and \il{put()}ing to another!
+
+Note that if you define a custom \il{__init__}, you also need to call \il{super}'s \il{__init__}  before you start modifying any instance attributes, so that QUI can do the necessary setup.
+
+\subsubsection{Regarding Fields}
+We really can't stress enough that you \emph{do not initialize \il{Field}s yourself}. All direct subclasses of \il{Field} are abstract, and even if they weren't, do not define all the methods that \il{Field} requires in order to be instantiated. They have to be combined with a subclass of \il{FieldMixin}, which fulfills their remaining requirements. QUI does this for you when you decorate a class definition, and instantiates an instance of the resulting field --- so that every \il{FileModel} has its own \il{name}.
+
 \subsection{Using QUI}
 QUI's ease of use is best exhibited by entering the Python interpreter:
-\lstdump[Session 3][getting and putting]{getting_and_setting.py}
+\lstdump[Session 3][creating an instance]{getting_and_setting.py}
 
 \section{Language Design}
 
@@ -229,14 +248,14 @@ QUI is implemented in Python, which was chosen for three main reasons:
 \begin{enumerate}
 \item Our own familiarity with it.
 \item Excellent metaprogramming facilities.
-\item Availability of backend APIs
+\item Availability of backend APIs.
 \end{enumerate}
 \subsection{Parsing}
 As an internal DSL, QUI doesn't do `parsing', in the same sense as an external one --- there's no need for an abstract syntax tree, and we can rely on Python to catch syntactically 
 illegal expressions in many cases.
 \subsection{Execution}
-QUI executes as part of normal Python code.
+As an internal DSL, QUI's semantics do not differ from those of its host language, Python. 
 \section{Evaluation}
-
+It all seems to work; multiple databases are supported, and our design is modular enough that support for more databases would be simple to add, if we so wished. 
 
 \end{document}

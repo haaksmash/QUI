@@ -11,14 +11,24 @@ from model_exceptions import *
 class AppEngineModelMix(ModelMixin):
     _port = 80808
     def put(self):
-        pass
+        print "Putting to AppEngine at {}:{}".format(self._host, self._port)
     
     def _get_interface(self):
-        pass
+        x = {}
+        for el in dir(self):
+            if "_" == el[0]:
+                continue
+            if hasattr(getattr(self, el), "__call__"):
+                continue
+            
+            x[el] = getattr(self, el)
+        
+        
+        return x
     
     @classmethod
     def get(cls, **kwargs):
-        pass
+        print "Getting from AppEngine"
     
     @classmethod
     def create(cls, **kwargs):
@@ -36,7 +46,7 @@ class AppEngineModelMix(ModelMixin):
                 print "can't set {}".format(key)
         
         #autostore created instances
-        #x.put()
+        x.put()
         return x
 
     def __init__(self, *args, **kwargs):

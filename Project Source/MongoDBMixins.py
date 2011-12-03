@@ -64,17 +64,20 @@ class MongoDBModelMix(ModelMixin):
             # skip private and special members
             if key[0] == "_" and (key != "_{}__id".format(self.__class__.__name__) and key != "_id"):
                 continue
+
             if hasattr(getattr(self, key), "__call__"):
-                # some fields may be callable - catch their values.
-                if hasattr(getattr(self, key),"value"):
+                # some fields may eventually be callable - catch their values.
+                if isinstance(getattr(self, key), Field):
                     value = getattr(self,key).value
                 else:
+                # skip non-field callables
                     continue
-            else:
-                value = getattr(self,key)
-                
+            # is this a field?
+            if key in self._field_names.keys():
+                f = self._get_direct(key)
+                value = f.translate()
             
-            
+            value = getattr(self, key)
             json.update({key:value})
         
         return json
