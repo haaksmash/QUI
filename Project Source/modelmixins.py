@@ -5,7 +5,10 @@ Created on Nov 13, 2011
 '''
 import abc
 
-from quiexceptions.model_exceptions import *
+#from quiexceptions.model_exceptions import *
+
+class Meta(abc.ABCMeta):
+    pass
 
 
 class ModelMixin(object):
@@ -14,7 +17,7 @@ class ModelMixin(object):
     
     
     '''
-    __metaclass__ = abc.ABCMeta
+    __metaclass__ = Meta
 
     def _get_direct(self, name):
         """ Convenience method to get at Fields directly, if necessary """

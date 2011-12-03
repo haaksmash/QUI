@@ -10,13 +10,14 @@ import abc
 
 
 from decorators.OProperty import OProperty
+from quiexceptions import QUIFieldException, DNEException
 
 from validators import *
 
-class FieldDNE(Exception):
+class FieldDNE(DNEException, QUIFieldException):
     pass
 
-class ValidationError(ValueError):
+class ValidationError(ValueError, QUIFieldException):
     pass
 
 class ClassField(object):

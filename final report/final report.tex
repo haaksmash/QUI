@@ -179,6 +179,13 @@ raises \il{ImproperlyConfigured} exceptions for any settings that are not valid 
 Every time a \il{QUIException}, or one of its derived exceptions, is raised, QUI prints an informative error message, detailing its best
 guess for what caused the exception. Along side, it prints the exception raised by the raw Python---just in case the guess is wrong.
 
+Figure~\ref{fig:exceptionhier} describes the exceptions provided by QUI, and their relation to each other.
+\begin{figure}
+\centering
+\includegraphics[width=450px]{ExceptionHierarchy}
+\caption{QUI's exception hierarchy}
+\label{fig:exceptionhier}
+\end{figure}
 
 
 \subsection{Tool Support}
@@ -200,7 +207,7 @@ Here's what it might look like if you wanted to define a simple model:
 \begin{figure}[htb]
 \centering
 \includegraphics[width=400px]{FileModelInheritanceTree}
-\caption{FileModel's family tree.}
+\caption{\il{FileModel}'s family tree.}
 \end{figure}
 
 \subsubsection{Step-by-step}
@@ -252,7 +259,9 @@ QUI will store it instances of \il{ImageFile} in a different `place' than it doe
 
 \il{TextFile} shows that you can define further \il{Field}s or regular class member variables, as you'd expect from a subclass.
 
-\il{Remote_File} exhibits the ability to redefine where the model should be stored, by customizing \il{_host} and \il{_port} members. The difference between defining them as class members and as instance members is subtle: all QUI functions will use the class member values, if they exist; only \il{put()} will use the instance values. So, \il{Remote_Files} will be \textbf{gotten} from the wherever \il{FileModel} has said to find them, but will be \textbf{put} to wherever \il{_host} has been initialized to. In this case, if \il{x = Remote_File.create(host='otherhost')}, it will be \il{create}d to \il{FileModel}'s host (localhost), but on port \il{91711}. \il{x.put()}, however, will store it on otherhost, also using port \il{91711}. This feature is great for migrating data between hosts; you'll be \il{get()}ing from one host and \il{put()}ing to another!
+\il{MoreClassFields} demonstrates the \il{subclass} decorator, which is only needed if your subclass defines more class-wide \il{Field}s. 
+
+\il{Remote_File} exhibits the ability to redefine where the model should be stored, by customizing \il{_host} and \il{_port} members. The difference between defining them as class members and as instance members is subtle: all QUI functions will use the class member values, if they exist; only \il{put()} will use the instance values. So, \il{Remote_Files} will be \textbf{gotten} from the wherever \il{FileModel} has said to find them, but will be \textbf{put} to wherever \il{_host} has been initialized to. In this case, if \il{x = Remote_File.create('otherhost')}, it will be \il{create}d to \il{FileModel}'s host (localhost), but on port \il{91711}. Then \il{x.put()} will store it on otherhost, also using port \il{91711}. This feature is great for migrating data between hosts; you'll be \il{get()}ing from one host and \il{put()}ing to another!
 
 Note that if you define a custom \il{__init__}, you also need to call \il{super}'s \il{__init__}  before you start modifying any instance attributes, so that QUI can do the necessary setup.
 
@@ -311,8 +320,17 @@ QUI is implemented in Python, which was chosen for three main reasons:
 As an internal DSL, QUI doesn't do `parsing', in the same sense as an external one --- there's no need for an abstract syntax tree, and we can rely on Python to catch syntactically 
 illegal expressions in many cases.
 \subsection{Execution}
-As an internal DSL, QUI's semantics do not differ from those of its host language, Python. 
+As an internal DSL, QUI's semantics do not differ from those of its host language, Python. Figure~\ref{fig:classdef} describes the operations that QUI is doing behind the scenes when
+a class is decorated with \il{storage}.
+\begin{figure}[htb]
+\centering
+\includegraphics[width=400px]{ClassDefTimeline}
+\caption{QUI's order of operations}
+\label{fig:classdef}
+\end{figure}
+
+The \il{subclass} decorator is similar, but only performs the operations relating to class-wide fields, since a subclass of a QUI model will already have much of the setup done by its parent class. 
 \section{Evaluation}
-It all seems to work; multiple databases are supported, and our design is modular enough that support for more databases would be simple to add, if we so wished. 
+For the most part, it all seems to work; multiple databases are supported, and our design is modular enough that support for more databases would be simple to add, if we so wished. 
 
 \end{document}

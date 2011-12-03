@@ -1,23 +1,27 @@
-from quiexceptions import QUIException
+from quiexceptions import QUIModelException, DNEException
 
-class NoPrimaryKey(QUIException):
+
+class PKError(QUIModelException):
+    pass
+
+class NoPrimaryKey(PKError):
     """No primary key is defined for this model"""
     pass
 
-class TooManyPKs(QUIException):
+class TooManyPKs(PKError):
     """Tried to define multiple PKs for this model"""
     pass
 
-class InvalidUserPK(NoPrimaryKey):
+class InvalidUserPK(PKError):
     """user-defined pk does not exist"""
 
-class ObjectDoesNotExist(QUIException):
+class ObjectDoesNotExist(QUIModelException, DNEException):
     "The requested object does not exist"
     silent_variable_failure = True
     
-class MultipleObjectsReturned(QUIException):
+class MultipleObjectsReturned(QUIModelException):
     "The query returned multiple objects when only one was expected."
     pass
 
-class ImproperlyConfigured(QUIException):
+class ImproperlyConfigured(QUIModelException):
     pass

@@ -1,6 +1,6 @@
 from models import Model
 from fields import StringField, DateField, IntegerField, BooleanField
-from decorators.storage_decorators import stored
+from decorators.storage_decorators import stored, subclass
 from decorators.field_decorators import class_field
 
 import AppEngineMixins
@@ -16,6 +16,9 @@ class FileModel(Model):
     the the decorator argument - instead of "AppEngine", put "MongoDB" 
     (for example), or whatever is appropriate for your backend.
     """
+    
+    
+        
     count = class_field(IntegerField)
     
     name = StringField
@@ -38,13 +41,15 @@ class FileModel(Model):
             return u"{}".format(self.name)
         else:
             return u"{}".format("Unnamed File")
-@stored()
+        
+@subclass
 class FMSub(FileModel):
     purple = BooleanField
     _host = "google.com"
     
-    count = class_field(IntegerField)
+    #count = class_field(IntegerField)
     
     def __init__(self):
+        super(FMSub, self).__init__(self)
         FMSub.count += 1
         self.purple = False
