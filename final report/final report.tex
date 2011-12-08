@@ -67,7 +67,8 @@ keywordsprefix = @
 \lst@AddToHook{TextStyle}{\let\lst@basicstyle\ttfamily\normalsize\fontfamily{pcr}\selectfont}
 \makeatother
 
-\newcommand{\il}[1]{\lstinline{#1}}
+%shorthand for inline listings, also prevents linebreaks in code
+\newcommand{\il}[1]{\mbox{\lstinline{#1}}}
 
 \newcommand{\lstslice}[3]{
 \begin{inset}
@@ -154,21 +155,45 @@ to implement a universal querying syntax, but rather a universal interface throu
 
 \section{Language Overview}
 \subsection{Basic Computation}
-At its heart, QUI is a translation engine. It converts class-like data into a form that is understandable to a backend's API.
+At its heart, QUI is a translation engine. It converts class-like data into a form that is understandable to a backend's API. This form, obviously, can
+vary quite a bit between databases (thus, the need for QUI in the first place) --- and the method of translation is unfortunately specific to each
+backend.
+
+An overview, however, is possible. QUI translates its own models (user-defined, of course) into what we internally refer to as an interface, which uses
+the language of the backend specified by the user; this interface is what allows QUI to talk to the backend. Currently, model instance's interface is only 
+created when necessary (during getting and putting), in order to reduce the memory overhead that QUI entails. 
+
+In our tests, the performance gains garnered by storing the interface as an instance attribute are not noticeable, especially since models typically 
+have fewer than 20 attributes at a time. Since interfaces are generally classes in their own right, however, they can double (or more) the size of 
+the instance if they're stored.
+
 \subsection{Basic Data Structures}
-QUI has two foundational elements: Models and Fields. 
+QUI has two foundational elements: \il{Model}s and \il{Field}s. These are both abstract classes; their purpose is more to serve as interface specifications
+for the rest of QUI --- any future extensions, even those written by others, are guaranteed to integrate seamlessly (as far as QUI is concerned)
+as long as they honor the requirements of these two root classes. 
+
+There are two other 'core' classes behind QUI---\il{ModelMixin} and \il{FieldMixin}, which serve similar purposes to \il{Model} and \il{Field}: interface
+ requirements, which any future backend mixins need to implement in order to be considered valid. In general, \il{ModelMixin}'s subclasses are used
+to add the functionality that \il{Model} requires of \emph{its} subclasses; likewise with \Il{FieldMixin}'s subclasses and \il{Field}'s.
+
 \subsection{Basic Control Structures}
 Users can fine-tune their interactions with their databases in a couple of ways:
 \begin{enumerate}
-\item Trivially, by passing in configuration arguments to the pre-created Field subclasses
-\item Defining their own fields, with custom behaviors
-\item Defining their own FieldMixins, customizing data requirements of the 
-\item Defining their own ModelMixins, customizing their interaction with the databases
+\item Trivially, by configuring the packaged \il{Field} subclasses (using keyword arguments defined as part of their model)
+\item Defining their own \il{Field} subclasses, with custom behaviors
+\item Defining their own \il{FieldMixin}s, customizing data requirements of their \il{Model}s
+\item Defining their own \il{ModelMixin}s, customizing their interaction with the databases
 \end{enumerate}
+Apart from these, QUI's control structures are Python's control structures, since QUI is an internal DSL.
+
+We'll see an example of configuring \il{Field}s later on. Creating custom \il{Field}s, \il{FieldMixin}s, and \il{ModelMixin}s is outside the scope of this report,
+but works the same way as subclassing any other new-style Python abstract metaclass; as long as you implement the required methods, you have a ``valid"
+subclass with which QUI can work. Whether or not it works the way you intend is an entirely different matter.
 
 \subsection{Input/Output}
 As input, QUI will accept...a valid Python class definition. As output, QUI gives users...an altered (dare we say, improved?) class definition.
-
+A QUI model need never use the extra methods provided by QUI; model classes can be instantiated just like any other class. Thus, declaring
+a class to be a QUI model necessitates zero changes to any existing code besides the class definition.
 
 \subsection{Error Handling}
 QUI defines several custom subclass of \il{Exception}, \il{QUIException}, so that the
@@ -180,16 +205,24 @@ Every time a \il{QUIException}, or one of its derived exceptions, is raised, QUI
 guess for what caused the exception. Along side, it prints the exception raised by the raw Python---just in case the guess is wrong.
 
 Figure~\ref{fig:exceptionhier} describes the exceptions provided by QUI, and their relation to each other.
-\begin{figure}
+\begin{figure}[htb]
 \centering
 \includegraphics[width=450px]{ExceptionHierarchy}
 \caption{QUI's exception hierarchy}
 \label{fig:exceptionhier}
 \end{figure}
 
+Although these allow QUI to catch programmatic and procedural errors, we have not implemented an error handling system that intuits
+probable \emph{desired} action; if commands are run which are `legal', according to QUI and Python syntax, no errors or warnings are raised---
+no matter what the effect of those commands are.
 
 \subsection{Tool Support}
+As an internal DSL, QUI ``programs'' can be written in any environment in which Python programs can be written; the one is a subset of the 
+other. There are no development environments that are \emph{specifically} designed to support or aid QUI programming, but most quality
+development environments provide class introspection and code completion, which we have found more than sufficient for our own
+purposes. 
 
+Admittedly, we are more familiar with QUI than might be said is average, so your mileage may vary.
 
 \subsection{Alternatives to QUI}
 There are a few interfaces which share a common purpose with QUI -- the universalization of database access. None, however,
@@ -199,12 +232,13 @@ universalize access to many SQL-based relational databases, but neither official
 QUI attempts to address an untapped niche market; its declared purpose is unique amongst ORMs.
 
 \section{Example Programs}
+\label{examples}
 \subsection{Model Definition}
 Here's what it might look like if you wanted to define a simple model:
 \lstdump[filemodel.py][defining a simple model]{model_definitions.py}
 
 \il{FileModel}'s family tree, after decoration, looks like this:
-\begin{figure}[htb]
+\begin{figure}[h!tb]
 \centering
 \includegraphics[width=400px]{FileModelInheritanceTree}
 \caption{\il{FileModel}'s family tree.}
@@ -231,7 +265,9 @@ but only acts on a few:
 	\item \il{port}, which takes an integer, and defaults to a backend-specific port.
 \end{enumerate}
 Our simple \il{FileModel}, then, uses the AppEngine backend, and will be stored locally, with default settings. Any subclasses of \il{FileModel}
-will automatically inherit these settings, but fine control is possible by defining \il{_host, _db, _port} on the subclass in question.
+will autoatically inherit these settings, but fine control is possible by defining \il{_host, _db, _port} on the subclass in question. If, for whatever
+reason, we decided we'd rather store \il{FileModel}s in MongoDB (for example), we'd have to change line 6 to \il{@stored(backend='MongoDB')}, 
+and QUI would acquiesce, no questions asked.
 
 Next, we set some fields that we think a \il{FileModel} should have:
 \lstslice{18}{27}{model_definitions.py}
@@ -305,8 +341,18 @@ Since our time for this project was limited, we focused our efforts on what we s
 
 
 \subsection{Syntax}
-QUI strives for an optimal combination of clarity and concision. It achieves this by only officially exposing three extra methods on stored models: \il{get()}, \il{create()}, and \il{put()}.
+As has been said repeatedly, QUI is an internal DSL; its syntax is no different from that allowed in any valid Python program. 
+Nevertheless, QUI strives (in true Pythonic style) for an optimal combination of clarity and concision. It achieves this by only officially 
+exposing three extra methods on stored models to users: \il{get(**kwargs)}, \il{create(**kwargs)}, and \il{put()}.
+
+By only adding these three verbs to any \il{Model} definition, QUI runs the least risk of becoming a burden to anyone who decides to use
+it; furthermore, these method names are unlikely to be already overidden. QUI doesn't want to step on anybody's toes, after all. 
+
+Most of QUI's syntax is covered in Section~\ref{examples}; the example \il{Model} definitions and interpreter sessions cover the fundamentals,
+and even some non-fundamentals, of using QUI pretty extensively. 
+
 \subsection{Semantic Abstractions/Building Blocks}
+
 
 \section{Language Implementation}
 \subsection{Host Language}
@@ -316,9 +362,12 @@ QUI is implemented in Python, which was chosen for three main reasons:
 \item Excellent metaprogramming facilities.
 \item Availability of backend APIs.
 \end{enumerate}
+In a big way, our vision of QUI's design steered us towards Python as the host language. 
+
 \subsection{Parsing}
 As an internal DSL, QUI doesn't do `parsing', in the same sense as an external one --- there's no need for an abstract syntax tree, and we can rely on Python to catch syntactically 
 illegal expressions in many cases.
+
 \subsection{Execution}
 As an internal DSL, QUI's semantics do not differ from those of its host language, Python. Figure~\ref{fig:classdef} describes the operations that QUI is doing behind the scenes when
 a class is decorated with \il{storage}.
@@ -330,6 +379,7 @@ a class is decorated with \il{storage}.
 \end{figure}
 
 The \il{subclass} decorator is similar, but only performs the operations relating to class-wide fields, since a subclass of a QUI model will already have much of the setup done by its parent class. 
+
 \section{Evaluation}
 For the most part, it all seems to work; multiple databases are supported, and our design is modular enough that support for more databases would be simple to add, if we so wished. 
 
