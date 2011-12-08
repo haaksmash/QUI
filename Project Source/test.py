@@ -3,6 +3,20 @@ from fields import StringField, DateField, IntegerField, BooleanField
 from decorators.storage_decorators import stored, subclass
 from decorators.field_decorators import class_field
 
+#Some horrible jankery to get AppEngine to look in the correct directories
+import os, sys
+from os.path import dirname, basename, splitext, join 
+GOOGLE_PATH = "C:/Program Files (x86)/Google/google_appengine" 
+EXTRA_PATHS = [
+    GOOGLE_PATH, 
+    os.path.join(GOOGLE_PATH, 'lib', 'django'), 
+    os.path.join(GOOGLE_PATH, 'lib', 'webob'), 
+    os.path.join(GOOGLE_PATH, 'lib', 'yaml', 'lib'), 
+] 
+for directory in EXTRA_PATHS: 
+    if not directory in sys.path: 
+        sys.path.insert(0, directory) 
+        
 import AppEngineMixins
 
 @stored(backend="AppEngine")
@@ -17,6 +31,7 @@ class FileModel(Model):
     (for example), or whatever is appropriate for your backend.
     """
     
+    sys.path.append("C:/Program Files (x86)/Google/google_appengine")
     
         
     count = class_field(IntegerField)
