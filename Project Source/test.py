@@ -29,13 +29,8 @@ class FileModel(Model):
     If your backend changes, the only code you need to change for this model is
     the the decorator argument - instead of "AppEngine", put "MongoDB" 
     (for example), or whatever is appropriate for your backend.
-    """
-    
-    sys.path.append("C:/Program Files (x86)/Google/google_appengine")
-    
-        
+    """ 
     count = class_field(IntegerField)
-    
     name = StringField
     size = IntegerField
     filetype = StringField
