@@ -2,6 +2,8 @@
 Created on Nov 13, 2011
 
 @author: Haak Saxberg and Jess Hester
+
+Mixin for the MongoDB backend
 '''
 from fields import Field
 from modelmixins import ModelMixin
@@ -12,6 +14,7 @@ import pymongo
 from bson.objectid import ObjectId
 
 class MongoDBModelMix(ModelMixin):
+    """Modelmixin class for the MongoDB backend"""
     
     _fieldmixin = "MDBFieldMix"    
     _port = 27017
@@ -26,7 +29,7 @@ class MongoDBModelMix(ModelMixin):
     
     @staticmethod
     def _get_collection(self,conn):
-        
+        """ Get the MongoDB collection for the class"""
         try:
             db = pymongo.database.Database(conn,self._db)
         except:
@@ -42,6 +45,7 @@ class MongoDBModelMix(ModelMixin):
         return coll
     
     def put(self):
+        """ Inserts a json object into the Mongo database """
         iface = self._get_interface()
         
         conn = pymongo.Connection(host=self._host, port=self._port)
@@ -57,10 +61,10 @@ class MongoDBModelMix(ModelMixin):
             self._id = coll.save(iface, manipulate=True)
             iface.update({"_id":self._id})
             
-        #conn.end_request()
         return iface
     
     def _get_interface(self):
+        """ Converts the model instance to a json object so it can be read into the MongoDB """
         json = {}
         for key in dir(self):
             # skip private and special members
@@ -86,6 +90,8 @@ class MongoDBModelMix(ModelMixin):
     
     @classmethod
     def get(cls, **kwargs):
+        """ Gets a specific model instance from the Database based on keyword arguments. 
+        """
         conn = pymongo.Connection(host=cls._host, port=cls._port)
         
         coll = MongoDBModelMix._get_collection(cls, conn)
@@ -106,6 +112,7 @@ class MongoDBModelMix(ModelMixin):
     
     @classmethod
     def create(cls, **kwargs):
+        """ Creates a MongoDB object and inserts it in the database. """
         # if they have special constructor arguments...
         if kwargs.has_key("init_args"):
             x = cls(**kwargs["init_args"])
@@ -124,6 +131,7 @@ class MongoDBModelMix(ModelMixin):
         return x
 
     def __init__(self, *args, **kwargs):
+        """ Overrides the init in order to ensure the existance of necessary arguments """
         super(MongoDBModelMix, self).__init__(*args, **kwargs)
         self._db = self.__class__._db if not kwargs.has_key("dbname") else kwargs["dbname"]
         self._host = self.__class__._host if not kwargs.has_key("host") else kwargs["host"]
@@ -135,9 +143,11 @@ class MongoDBModelMix(ModelMixin):
 
 class MongoDBFieldMix(FieldMixin):
     def clean(self):
+        """ Not currently implemented"""
         pass
     
     def translate(self):
+        """ Returns the field's value """
         return self.value
 
 
