@@ -170,9 +170,9 @@ An overview, however, is possible. QUI translates its own models (user-defined, 
 the language of the backend specified by the user; this interface is what allows QUI to talk to the backend. Currently, model instance's interface is only 
 created when necessary (during getting and putting), in order to reduce the memory overhead that QUI entails. 
 
-In our tests, the performance gains garnered by storing the interface as an instance attribute are not noticeable, especially since models typically 
+In our tests, the performance gains garnered by storing the interface as an instance attribute are not noticeable, especially as models typically 
 have fewer than 20 attributes at a time. Since interfaces are generally classes in their own right, however, they can double (or more) the size of 
-the instance if they're stored.
+the instance if they're stored; this cost can quickly add up, if the user were to \il{get}/\il{put} numerous \il{Model}s.
 
 \subsection{Basic Data Structures}
 QUI has two foundational elements: \il{Model}s and \il{Field}s. These are both abstract classes; their purpose is more to serve as interface specifications
@@ -203,7 +203,7 @@ A QUI model need never use the extra methods provided by QUI; model classes can 
 a class to be a QUI model necessitates zero changes to any existing code besides the class definition.
 
 \subsection{Error Handling}
-QUI defines several custom subclass of \il{Exception}, \il{QUIException}, so that the
+QUI defines several custom subclasses of \il{Exception}, \il{QUIException}, so that the
 user can be informed about exactly what QUI thinks has gone wrong, and where, and with what values.
 QUI implements a few ``levels'' of exception, insofar as Python supports ``levels'' of program running. At the ``compilation'' level, QUI
 raises \il{ImproperlyConfigured} exceptions for any settings that are not valid or missing, with appropriate error messages alongside.
@@ -234,7 +234,7 @@ Admittedly, we are more familiar with QUI than might be said is average, so your
 \subsection{Alternatives to QUI}
 There are a few interfaces which share a common purpose with QUI -- the universalization of database access. None, however,
 make it their focus to unify \emph{non-relational} databases. Packages like SQLAlchemy and Django's proprietary ORM work to
-universalize access to many SQL-based relational databases, but neither officially supports non-relational databases of any sort.\\
+universalize access to many SQL-based relational databases, but neither officially supports non-relational databases of any sort.
 
 QUI attempts to address an untapped niche market; its declared purpose is unique amongst ORMs.
 \newpage
@@ -246,7 +246,7 @@ Here's what it might look like if you wanted to define a simple model:
 \lstdump[filemodel.py][defining a simple model]{model_definitions.py}
 
 \il{FileModel}'s family tree, after decoration, looks like this:
-\begin{figure}[h!tb]
+\begin{figure}[htb]
 \centering
 \includegraphics[width=400px]{FileModelInheritanceTree}
 \caption{\il{FileModel}'s family tree.}
@@ -272,9 +272,9 @@ but only acts on a few:
 	\item \il{db}, which takes a string and defaults to a backend-specific value.
 	\item \il{port}, which takes an integer, and defaults to a backend-specific port.
 \end{enumerate}
-Our simple \il{FileModel}, then, uses the AppEngine backend, and will be stored locally, with default settings. Any subclasses of \il{FileModel}
+Our simple \il{FileModel}, then, uses the MongoDB backend, and will be stored locally, with default settings. Any subclasses of \il{FileModel}
 will autoatically inherit these settings, but fine control is possible by defining \il{_host, _db, _port} on the subclass in question. If, for whatever
-reason, we decided we'd rather store \il{FileModel}s in MongoDB (for example), we'd have to change line 6 to \il{@stored(backend='MongoDB')}, 
+reason, we decided we'd rather store \il{FileModel}s using Pickling (for example), we'd have to change line 6 to \il{@stored(backend='Pickle')}, 
 and QUI would acquiesce, no questions asked.
 
 Next, we set some fields that we think a \il{FileModel} should have:
@@ -362,7 +362,7 @@ and even some non-fundamentals, of using QUI pretty extensively. The user has a 
 Models, and are able to give the Model functionality in whatever manner they deem fit.
 
 \subsection{Semantic Abstractions/Building Blocks}
-QUI is abstracted into a number of different, though related sections. The user creates some sort of model (e.g., a FileModel), and performs \texttt{put, get,} and \texttt{create} operations as needed (they can also create other subclasses or functions within the FileModel class). At the top of the file (for now), users must import
+QUI is abstracted into a number of different, though related sections. The user creates some sort of model (e.g., a FileModel), and performs \il{put, get,} and \il{create} operations as needed (they can also create other subclasses or functions within the FileModel class). At the top of the file (for now), users must import
 our Model, any fields they want to use, and any decorators they want to use. 
 
 Under the hood, operations become more complex for each API.  At its core, however, QUI uses the 'black box' of the API for each backend database, and accesses methods
@@ -401,14 +401,14 @@ The \il{subclass} decorator is similar, but only performs the operations relatin
 Currently, two backends are supported. 
 \subsubsection{MongoDB}
 	MongoDB is a  popular, free non-relational database. For putting, model instances are converted to JSON, and then saved in a database via some port. The port default is 27017,
-	but the user can specify the port via passed in arguments. The \texttt{\_get\_interface()} method takes the model instance and sets each field as a key:value pair in the JSON
+	but the user can specify the port via passed in arguments. The \il{\_get\_interface()} method takes the model instance and sets each field as a key:value pair in the JSON
 	dict.
 
 	Getting is simply a matter of finding the object which corresponds to the passed in keyword arguments.
 	
 \subsubsection{Pickling}
-	Also supported is local storage of model instances, using the Python pickle module. Model instances are stored in the directory specified by the \texttt{\_path} variable, in
-	the file $Modelname\backslash InstanceName$. Sadly, Python's pickle module will only pickle global classes (namely, not our Models), so this backend simply pickles a dict
+	Also supported is local storage of model instances, using the Python pickle module. Model instances are stored in the directory specified by the \il{\_path} variable, in
+	the file $Modelname\backslash InstancePrimaryKey$. Sadly, Python's pickle module will only pickle global classes (namely, not our \il{Model}s), so this backend simply pickles a dict
 	which contains the state of the model instance.
 
 	
@@ -417,7 +417,7 @@ Currently, two backends are supported.
 \newpage	
 \section{Evaluation}
 The basic implementation of QUI went as planned, building the framework for adding various backends. Adding a new backend is a nontrivial task, but only one file needs to be added
-(\texttt{NewBackEndMixins.py}) defining the necessary classes, and QUI will take care of performing the operations given a new Model.
+(\il{NewBackEndMixins.py}) defining the necessary classes, and QUI will take care of performing the operations for a \il{Model} decorated to use that backend.
 
 Likewise, QUI's syntax is clear and concise, providing basic functionality while allowing the user full access to the power of Python. The user is free to use our built-in backend mixins, or 
 to define their own if they so wish. This is well in keeping with the idea of non-relational databases: to give the user the flexibility they need to extend their applications in whatever
@@ -425,19 +425,19 @@ directions they wish to go.
 
 However, some difficulties were encountered in the implementation of QUI. Our initial intention was to use Google AppEngine as another backend, but upon investigation into the AppEngine
 datastore, we found that AppEngine supports a non-relational database solely for applications on Google AppEngine. Pulling out just the datastore connection proved essentially impossible 
-without a working application online. In light of these, providing support for just the AppEngine database seemed both overly time-consuming and unlikely to benefit any customers, as they
+without a working application online. In light of this, providing support for just the AppEngine database seemed both overly time-consuming and unlikely to benefit any users, as they
 still have to use other AppEngine functionalities to access their datastores. So, we focused on MongoDB and Pickling as our supported backends.
 
 Time constraints also presented an issue during later development. The two methods required for specific backend FieldMixins have not yet been fully implemented, as 
-they have almost no impact on the usability of the database and were added as a potential feature that might be convenient to users. The method \texttt{translate()} currently returns the 
-value of a field, but would in the future convert a top-level \texttt{StringField()} (for example) to a \texttt{db.StringProperty()}, or whatever is appropriate for that backend.
+they have almost no impact on the usability of the database and were added as a potential feature that might be convenient to users. The method \il{translate()} currently returns the 
+value of a field, but would in the future convert a top-level \il{StringField()} (for example) to a \il{db.StringProperty()}, or whatever is appropriate for that backend.
 
 QUI was developed and implemented as a team. The initial design was done entirely on whiteboards with both participants working together.
 
   Later in the process, pair programming was used, with both members working on one computer. This was the abstract base classes and later the classes for the mixins to inherit. 
   
   The last stage of the project was actually developing for the backends. The backends were split between the two team members, though both had input in each backend --- for example, the
-   decision to not support AppEngine as a backend was made as a team.
+   decision to stop trying to support AppEngine as a backend was made as a team.
 
 \newpage
 \appendix
@@ -452,6 +452,8 @@ Non-relational databases are not as restricted in their structure (see Figure~\r
 columns, each model instance is a 'page' in the database, with its own fields (some of which may be required, and others specific to the instance itself). So, 
 non-relational databases are much more horizontally flexible when freezing the database would be inopportune if a new field needs to be added.
 
+Implementations of non-relational databases vary widely between backends, but the main idea of non-relational databases is removing the field restriction for the user.
+One of QUI's basic goals is to preserve this functionality. 
 \begin{figure}[htb]
 \centering
 \includegraphics[width=300px]{RelNonRel}
@@ -459,7 +461,5 @@ non-relational databases are much more horizontally flexible when freezing the d
 \label{fig:reltab}
 \end{figure}
 
-Implementations of non-relational databases vary widely between backends, but the main idea of non-relational databases is removing the field restriction for the user.
-One of QUI's basic goals is to preserve this functionality. 
 
 \end{document}
