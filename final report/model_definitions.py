@@ -3,15 +3,15 @@ from qui.fields import *
 from qui.decorators.storage import stored
 from qui.decorators.field_decorators import class_field
 
-@stored(backend="AppEngine")
+@stored(backend="MongoDB")
 class FileModel(Model):
     """ A simple file model.
     
     This model will inherit directly from a supplied mixin - in this case, one 
-    that enables the model to talk to Google's AppEngine service.
+    that enables the model to talk to MongoDB.
     
     If your backend changes, the only code you need to change for this model is
-    the the decorator argument - instead of "AppEngine", put "MongoDB" 
+    the the decorator argument - instead of "MongoDB", put "Pickle" 
     (for example), or whatever is appropriate for your backend.
     """
     
