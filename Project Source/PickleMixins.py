@@ -21,6 +21,7 @@ class PickleModelMix(ModelMixin):
     _path = os.getcwd()
     
     def __getstate__(self):
+        """ Returns a dictionary representing the state of the model """
         global AutoSub
         AutoSub = self.__class__
         return (self.__dict__, self.__class__)
@@ -32,7 +33,6 @@ class PickleModelMix(ModelMixin):
         """
         # pickle instances into folders by class name, and files by pk
         dirname = self.__class__.__name__
-        print dirname
         if not os.path.exists(dirname):
             print "making new directory...{}".format(dirname)
             os.makedirs(dirname)
@@ -98,6 +98,7 @@ class PickleModelMix(ModelMixin):
         return x
     
     def _get_interface(self):
+        """ Gets the representation in a Json object """
         json = {}
         for key in dir(self):
             # skip private and special members
@@ -123,7 +124,9 @@ class PickleModelMix(ModelMixin):
     
 class PickleFieldMix(FieldMixin): 
     def clean(self):
+        """ Not currently implemented """
         pass
     
     def translate(self):
+        """ Returns the field's value """
         return self.value
