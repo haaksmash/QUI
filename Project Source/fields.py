@@ -247,6 +247,8 @@ class DateField(Field):
 
     def validate(self, val):
         print type(val)
+        if val is None:
+            return True
         if isinstance(val, datetime.date):
             return True
         elif isinstance(val, str):
