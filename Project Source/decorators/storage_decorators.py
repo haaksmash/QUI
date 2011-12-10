@@ -99,7 +99,7 @@ def stored(cls=None, **kwargs):
         else:
             BEFieldMix = get_mixin(kwargs["backend"], model=False)
         #setattr(cls, "_fieldmix", BEFieldMix)
-    
+        
         # nab any ClassFields
         setattr(cls, "_class_fields", {})
         for key in dir(cls):
@@ -114,7 +114,11 @@ def stored(cls=None, **kwargs):
                 #print key, f, f.__bases__
                 NewF = type(f.__name__, (BEFieldMix,f)+f.__bases__,{})
                 #print NewF.__bases__
-                setattr(cls, key, NewF())
+                if hasattr(cls, "Options") and hasattr(cls.Options,key):
+                    options = getattr(cls.Options,key)
+                else:
+                    options = {}
+                setattr(cls, key, NewF(**options))
 
                 cls._class_fields[key] = getattr(cls, key)
                 

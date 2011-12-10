@@ -72,10 +72,9 @@ class Field(object):
     def __init__(self, *args, **kwargs):
         self._validators = ()
         self._value = None
-        if kwargs.has_key("primary_key"):
-            self._primary_key = True
-        else:
-            self._primary_key = False
+
+        if kwargs.has_key('default'):
+            self.value = kwargs['default']
             
         
 

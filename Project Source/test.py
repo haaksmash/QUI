@@ -22,6 +22,9 @@ class FileModel(Model):
     created = DateField
     is_safe = BooleanField
     
+    class Options:
+        count = {'default':0}
+    
     def my_size(self):
         """ A function specific to this model, unmanaged by QUI """
         return u"{} bytes".format(self.size)
