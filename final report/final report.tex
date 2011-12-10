@@ -158,7 +158,7 @@ Enter the Query Universal Interface (QUI).
 QUI attempts to ease the transition between non-relational databases, like other ORMs do for relational databases. QUI does not pretend
 to implement a universal querying syntax, but rather a universal interface through which code can talk to data with minimal, if any, change.
 
-
+\newpage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%	SECTION 2	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Language Overview}
 \subsection{Basic Computation}
@@ -333,7 +333,7 @@ somewhere down the line, decided that \il{x.sensitive = True}, QUI would happily
 QUI's ease of use is best exhibited by entering the Python interpreter:
 
 \lstsession[creating an instance with arbitrary attributes]{getting_and_setting.py}
-
+\newpage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%	SECTION 4	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Language Design}
 
@@ -370,7 +370,7 @@ as necessary to create, put, or get model instances. The user inputs commands us
 These decorators call the appropriate Field and Model mixins so attributes are properly assigned and stored depending on the backend. The user should never see any actual 
 database operations; QUI will handle all connections and operations necessary beyond the user's call to get, put, or create.
 
-
+\newpage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%	SECTION 5	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Language Implementation}
 \subsection{Host Language}
@@ -410,7 +410,11 @@ Currently, two backends are supported.
 	Also supported is local storage of model instances, using the Python pickle module. Model instances are stored in the directory specified by the \texttt{\_path} variable, in
 	the file $Modelname\backslash InstanceName$. Sadly, Python's pickle module will only pickle global classes (namely, not our Models), so this backend simply pickles a dict
 	which contains the state of the model instance.
+
 	
+		
+			
+\newpage	
 \section{Evaluation}
 The basic implementation of QUI went as planned, building the framework for adding various backends. Adding a new backend is a nontrivial task, but only one file needs to be added
 (\texttt{NewBackEndMixins.py}) defining the necessary classes, and QUI will take care of performing the operations given a new Model.
@@ -424,10 +428,16 @@ datastore, we found that AppEngine supports a non-relational database solely for
 without a working application online. In light of these, providing support for just the AppEngine database seemed both overly time-consuming and unlikely to benefit any customers, as they
 still have to use other AppEngine functionalities to access their datastores. So, we focused on MongoDB and Pickling as our supported backends.
 
-QUI was developed and implemented as a team. The initial design was done entirely on whiteboards with both participants working together. Later in the process, pair programming was 
-used, with both members working on one computer. This was the abstract base classes and later the classes for the mixins to inherit. The last stage of the project was actually 
-developing for the backends. The backends were split between the two team members, though both had input in each backend --- for example, the decision to not support AppEngine
-as a backend was made as a team.
+Time constraints also presented an issue during later development. The two methods required for specific backend FieldMixins have not yet been fully implemented, as 
+they have almost no impact on the usability of the database and were added as a potential feature that might be convenient to users. The method \texttt{translate()} currently returns the 
+value of a field, but would in the future convert a top-level \texttt{StringField()} (for example) to a \texttt{db.StringProperty()}, or whatever is appropriate for that backend.
+
+QUI was developed and implemented as a team. The initial design was done entirely on whiteboards with both participants working together.
+
+  Later in the process, pair programming was used, with both members working on one computer. This was the abstract base classes and later the classes for the mixins to inherit. 
+  
+  The last stage of the project was actually developing for the backends. The backends were split between the two team members, though both had input in each backend --- for example, the
+   decision to not support AppEngine as a backend was made as a team.
 
 \newpage
 \appendix
@@ -450,6 +460,6 @@ non-relational databases are much more horizontally flexible when freezing the d
 \end{figure}
 
 Implementations of non-relational databases vary widely between backends, but the main idea of non-relational databases is removing the field restriction for the user.
-One of QUI's basic goals is to preserve this functionality.
+One of QUI's basic goals is to preserve this functionality. 
 
 \end{document}
