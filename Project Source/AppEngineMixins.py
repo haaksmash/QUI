@@ -2,6 +2,10 @@
 Created on Nov 13, 2011
 
 @author: Haak Saxberg and Jess Hester
+
+After extensive efforts, we have decided that supporting AppEngine is 
+unreasonable, given that the datastore must be linked to an application
+already on AppEngine and with its own environment. 
 '''
 import os
 from fields import Field
