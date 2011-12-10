@@ -9,7 +9,10 @@ from fields import Field, ClassField, FieldDNE
 
 
 def primary_key(cls):
-    """Marks a field as a primary key.
+    """Marks a field as a primary key. 
+    This function does not currently influence QUI's behavior in any way.
+    
+    TODO: make a PrimaryKey field class, same as ClassField 
     """
     oldinit = cls.__init__
     def newinit(self, *args, **kwargs):
@@ -21,6 +24,9 @@ def primary_key(cls):
 
 
 def class_field(cls):
+    """Marks a field as a class-wide field.
+        Raises an error if given a non-Field class.
+    """
     if not Field in cls.__mro__:
         raise FieldDNE("Not a field: {}".format(cls.__name__))
 

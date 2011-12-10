@@ -7,11 +7,15 @@ from settings import SUPPORTED_BACKENDS
 def stored(cls=None, **kwargs):
     """Modifies a class for use with QUI's mixins
     
-        Accepts arbitrary keyword arguments, but only acts on
-        backend = None
-        db = "localhost"
-        port = backend-specific-default
-        host = "local"
+    Accepts arbitrary keyword arguments, but only acts on
+    backend = None
+    db = "localhost"
+    port = backend-specific-default
+    host = "local"
+    
+    this decorator does all the work that QUI needs to do; adds mixins to the class and
+    any fields that the class happens to have defined.
+        
     """
     required_kwargs = []
     mixins = {}
@@ -23,6 +27,13 @@ def stored(cls=None, **kwargs):
         
         mixins['modelmix'] = BEModelMixin
         """
+        # The following is the result of an experiment to allow users to define
+        # model- and fieldmixins manually, if they so wished (if they had custom
+        # defined their own fieldmixin, for example, but were satisfied with
+        # the supplied modelmixin.
+        # Results were promising, but presented issues that we didn't have time to deal
+        # with before submission time.
+        
     elif kwargs.has_key('modelmix'):
         if isinstance(kwargs['modelmix'], basestring):
             raise TypeError("modelmix keyworkd argument can't be a string")
@@ -60,13 +71,18 @@ def stored(cls=None, **kwargs):
                 
             else:
                 raise TypeError("_backend attribute must be a string")
+            
             """
+            # further relics of the manual specification experiment; left in
+            # because we'd like to work on this more later.
+            
         elif not kwargs["backend"]:
             try:
                 mixins['modelmix'] 
             except Exception, e: 
                 raise ImproperlyConfigured("No backend defined: {}\n{}".format(cls.__name__,e))
             """
+            
         else:
             setattr(cls, "_backend", kwargs['backend'])
             #setattr(cls, "_modelmix", mixins['modelmix'])
@@ -74,23 +90,22 @@ def stored(cls=None, **kwargs):
         
         # add mixins as necessary - potentially more than one
         bases = cls.__bases__
-        #print bases
         for key in mixins:
             if mixins[key] not in cls.__mro__:
                 #print "Adding {} to {} and its subclasses...".format(mixins[key].__name__, cls.__name__)
                 bases = (mixins[key], ) + bases 
-        #print cls.__name__
-        # the class's typename is the same as before!
+        
+        # ensures the class's typename is the same as before!
         cls = type(cls.__name__, (cls,)+bases, {})
         kwargs["class"] = cls
         
-        
+        # allows manual fieldmix specification
         if hasattr(cls, "_fieldmix"):
             BEFieldMix = cls._fieldmix
         
         elif kwargs.has_key("fieldmix"):
             if isinstance(kwargs['fieldmix'],basestring):
-                raise TypeError("fieldmix keyword argument can't be a string")
+                raise TypeError("fieldmix keyword must be a class, not a string")
             
             BEFieldMix = kwargs['fieldmix']
             setattr(cls, "_fieldmix", BEFieldMix)
@@ -100,7 +115,8 @@ def stored(cls=None, **kwargs):
             BEFieldMix = get_mixin(kwargs["backend"], model=False)
         #setattr(cls, "_fieldmix", BEFieldMix)
         
-        # nab any ClassFields
+        # nab any ClassFields and initialize them at decoration time,
+        # so they're available immediately (as we'd expect)
         setattr(cls, "_class_fields", {})
         for key in dir(cls):
             try:
@@ -136,9 +152,12 @@ def stored(cls=None, **kwargs):
         if kwargs.has_key("port"):
             setattr(cls, "_db", int(kwargs["port"]))
         elif not hasattr(cls, "_port"):
-            raise ImproperlyConfigured("no port for model:{}".format(cls.__name__)) 
+            raise ImproperlyConfigured("no port for model:{}".format(cls.__name__))
+         
+        ##############
+        # alter the class's __init__, as necessary, for init'ing of fields and such.
         
-        # alter the class's __init__, as necessary,
+        #
         oldinit = cls.__init__
         def quiinit(self, QUIARGS=kwargs, *args, **kwargs):
             #print "Entering Modified init..."
@@ -166,18 +185,23 @@ def stored(cls=None, **kwargs):
                     continue
                 #print key
                 
-                # put appropriate mixin into the field in question
+                
                 f = getattr(self, key)
                 #print "Found a field - {}:{}".format(key,f) 
-                NewF = type(f.__name__, (BEFieldMix,f)+f.__bases__,{})
-                #print f.__name__
-                #print NewF.__bases__
                 
-                self._field_names[key] = NewF()
-                #delattr(self, key)
+                # put appropriate mixin into the field in question
+                NewF = type(f.__name__, (BEFieldMix,f)+f.__bases__,{})
+                
+                # if it has any options set for it, use them in the init
+                if hasattr(cls, "Options") and hasattr(cls.Options,key):
+                    options = getattr(cls.Options,key)
+                else:
+                    options = {}
+                self._field_names[key] = NewF(**options)
+                
             #print "returning to user-defined init..."
             oldinit(self, *args, **kwargs)
-            #print _fields_to_init            
+                        
             
             
 
@@ -191,10 +215,15 @@ def stored(cls=None, **kwargs):
 
 
 def subclass(cls):
+    """Initializes any subclass-wide fields, without doing all the work that @stored does.
+       
+    This decorator requires that a class have the _backend attribute defined. 
+    """
+    
     if "_class_fields" in dir(cls):
-        print cls._class_fields 
+        pass
     else:
-        raise
+        pass
     
     BEFieldMix = get_mixin(cls._backend, model=False)
     
@@ -210,7 +239,11 @@ def subclass(cls):
             continue
         
         NewF = type(f.__name__, (BEFieldMix, f)+f.__bases__, {})
-        setattr(cls, key, NewF())
+        if hasattr(cls, "Options") and hasattr(cls.Options,key):
+                options = getattr(cls.Options,key)
+        else:
+            options = {}
+        setattr(cls, key, NewF(**options))
         cls._class_fields[key] = getattr(cls, key)
         
     return cls

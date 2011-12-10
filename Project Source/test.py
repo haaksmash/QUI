@@ -8,10 +8,10 @@ class FileModel(Model):
     """ A simple file model.
     
     This model inherits directly from a supplied mixin - in this case, one that
-    enables the model to talk to Google's AppEngine database.
+    enables the model to talk to Python's pickling engine.
     
     If your backend changes, the only code you need to change for this model is
-    the the decorator argument - instead of "AppEngine", put "MongoDB" 
+    the the decorator argument - instead of "Pickle", put "MongoDB" 
     (for example), or whatever is appropriate for your backend.
     """ 
     count = class_field(IntegerField)
@@ -42,9 +42,6 @@ class FileModel(Model):
 @subclass
 class FMSub(FileModel):
     purple = BooleanField
-    _host = "google.com"
-    
-    #count = class_field(IntegerField)
     
     def __init__(self):
         super(FMSub, self).__init__(self)

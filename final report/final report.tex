@@ -193,7 +193,18 @@ Users can fine-tune their interactions with their databases in a couple of ways:
 \end{enumerate}
 Apart from these, QUI's control structures are Python's control structures, since QUI is an internal DSL.
 
-We'll see an example of configuring \il{Field}s later on. Creating custom \il{Field}s, \il{FieldMixin}s, and \il{ModelMixin}s is outside the scope of this report,
+Users can configure a \il{Field} by defining an \il{Options} class inside their \il{Model} definition; currently, \il{Field}s only know how to handle the
+`default' option, which sets their value at the time of their initialization. So, if we had a \il{BooleanField} named \il{is_safe}, and wanted it to default to
+\il{False}, we'd define the inline class \il{Options} thus:
+\begin{inset}
+\begin{lstlisting}
+class Options:
+    is_safe = {'default':False}
+\end{lstlisting}
+\end{inset}
+A \il{Field}'s normal validation behavior will apply to any defaults; if the default value is invalid for the field type, QUI will raise an exception when the \il{Field} is first
+initialized. 
+Creating custom \il{Field}s, \il{FieldMixin}s, and \il{ModelMixin}s is outside the scope of this report,
 but works the same way as subclassing any other new-style Python abstract metaclass; as long as you implement the required methods, you have a ``valid"
 subclass with which QUI can work. Whether or not it works the way you intend is an entirely different matter.
 
@@ -333,6 +344,10 @@ somewhere down the line, decided that \il{x.sensitive = True}, QUI would happily
 QUI's ease of use is best exhibited by entering the Python interpreter:
 
 \lstsession[creating an instance with arbitrary attributes]{getting_and_setting.py}
+
+This session doesn't show much that we haven't already seen; note that \il{f} has been created with an attribute that doesn't exist on the model's `hardcoded' definition,
+and QUI is totally fine with it. Just as it works in the interpreter, so to will it work in any other Python-executing environment. 
+
 \newpage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%	SECTION 4	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Language Design}
@@ -347,7 +362,8 @@ Since our time for this project was limited, we focused our efforts on what we s
 \item \textbf{Putting} an instance of a stored model into the backend.
 \item \textbf{Getting} an instance of a stored model from the data stored in the backend.
 \end{enumerate}
-This tight focus on basic database operations also means there is almost no difficulty in learning QUI's syntax.
+This tight focus on basic database operations also means there is almost no difficulty in learning QUI's syntax; the method of decorating a class as ``storable'' is also
+incredibly simple, especially if the user is satsified to use QUI's default settings.
 
 \subsection{Syntax}
 As has been said repeatedly, QUI is an internal DSL; its syntax is no different from that allowed in any valid Python program. 
@@ -359,15 +375,15 @@ it; furthermore, these method names are unlikely to be already overridden. QUI d
 
 Most of QUI's syntax is covered in Section~\ref{examples}; the example \il{Model} definitions and interpreter sessions cover the fundamentals,
 and even some non-fundamentals, of using QUI pretty extensively. The user has a large amount of power when decided how exactly to create their
-Models, and are able to give the Model functionality in whatever manner they deem fit.
+\il{Model}s, and are able to give the \il{Model} functionality in whatever manner they deem fit.
 
 \subsection{Semantic Abstractions/Building Blocks}
-QUI is abstracted into a number of different, though related sections. The user creates some sort of model (e.g., a FileModel), and performs \il{put, get,} and \il{create} operations as needed (they can also create other subclasses or functions within the FileModel class). At the top of the file (for now), users must import
+QUI is abstracted into a number of different, though related sections. The user creates some sort of model (e.g., a \il{FileModel}), and performs \il{put, get,} and \il{create} operations as needed (they can also create other subclasses or functions within the \il{FileModel} class). At the top of the file (for now), users must import
 our Model, any fields they want to use, and any decorators they want to use. 
 
 Under the hood, operations become more complex for each API.  At its core, however, QUI uses the 'black box' of the API for each backend database, and accesses methods
-as necessary to create, put, or get model instances. The user inputs commands using their created file (see examples above), which is decorated with the appropriate backend. 
-These decorators call the appropriate Field and Model mixins so attributes are properly assigned and stored depending on the backend. The user should never see any actual 
+as necessary to create, put, or get model instances. The user inputs commands using their created file (see examples above), which is decorated to use the appropriate backend mixins. 
+These decorators call the appropriate \il{Field} and \il{Model} mixins so attributes are properly assigned and stored depending on the backend. The user should never see any actual 
 database operations; QUI will handle all connections and operations necessary beyond the user's call to get, put, or create.
 
 \newpage
@@ -384,7 +400,8 @@ In a big way, our vision of QUI's design steered us towards Python as the host l
 
 \subsection{Parsing}
 As an internal DSL, it's unnecessary for QUI to perform any `parsing' operations, in the same sense as an external one --- there's no need for an abstract syntax tree, as QUI syntax
-is merely Python syntax. In addition, we can rely on Python to catch syntactically illegal expressions in many cases.
+is merely Python syntax. In addition, we can rely on Python to catch syntactically illegal expressions in many cases. The most parsing that QUI ever does is on arguments to functions,
+and these operate like flags or switches, determining flow through the various operations that QUI supports.
 
 \subsection{Execution}
 As an internal DSL, QUI's semantics do not differ from those of its host language, Python. Figure~\ref{fig:classdef} describes the operations that QUI is doing behind the scenes when
@@ -409,15 +426,12 @@ Currently, two backends are supported.
 \subsubsection{Pickling}
 	Also supported is local storage of model instances, using the Python pickle module. Model instances are stored in the directory specified by the \il{\_path} variable, in
 	the file $Modelname\backslash InstancePrimaryKey$. Sadly, Python's pickle module will only pickle global classes (namely, not our \il{Model}s), so this backend simply pickles a dict
-	which contains the state of the model instance.
-
-	
-		
+	which contains the state of the model instance.	
 			
 \newpage	
 \section{Evaluation}
 The basic implementation of QUI went as planned, building the framework for adding various backends. Adding a new backend is a nontrivial task, but only one file needs to be added
-(\il{NewBackEndMixins.py}) defining the necessary classes, and QUI will take care of performing the operations for a \il{Model} decorated to use that backend.
+(\il{NewBackEndMixins.py}) defining the necessary classes, and QUI will take care of performing the operations for a \il{Model} decorated to use that backend (\il{@stored(backend='NewBackEnd')}).
 
 Likewise, QUI's syntax is clear and concise, providing basic functionality while allowing the user full access to the power of Python. The user is free to use our built-in backend mixins, or 
 to define their own if they so wish. This is well in keeping with the idea of non-relational databases: to give the user the flexibility they need to extend their applications in whatever
@@ -431,7 +445,9 @@ still have to use other AppEngine functionalities to access their datastores. So
 
 Time constraints also presented an issue during later development. The two methods required for specific backend FieldMixins have not yet been fully implemented, as 
 they have almost no impact on the usability of the database and were added as a potential feature that might be convenient to users. The method \il{translate()} currently returns the 
-value of a field, but would in the future convert a top-level \il{StringField()} (for example) to a \il{db.StringProperty()}, or whatever is appropriate for that backend.
+value of a field, but would in the future convert a top-level \il{StringField()} (for example) to a \il{db.StringProperty()}, or whatever is appropriate for that backend. We also didn't have
+time to override \emph{class} versions of \il{__getattribute__} and \il{__setattr__}, which involves some interesting work with metaclasses---so to access a class-wide \il{Field}'s value, 
+you have to directly access its \il{value} attribute.
 
 Likewise, the method \il{clean()} is intended to sanitize data before it is inserted into the database.
 

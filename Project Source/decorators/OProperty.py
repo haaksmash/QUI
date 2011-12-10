@@ -2,6 +2,8 @@
 Created on Dec 1, 2011
 
 @author: haak
+
+OProperty allows overriding of functions like @property ought to, but does not.
 '''
 class OProperty(object):
     """Based on the emulation of PyProperty_Type() in Objects/descrobject.c"""

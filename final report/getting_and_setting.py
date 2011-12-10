@@ -1,4 +1,4 @@
- $ python -i FileModel.py
+ $ python -i filemodel.py
  >>> f = FileModel.create(
  ... name="arrow.jpg",
  ... size=100,
