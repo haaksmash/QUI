@@ -144,6 +144,11 @@ In the past, this issue was annoying but manageable, since persistent storage wa
 By the mid 90's, nearly all relational databases were mostly SQL-compliant. Every vendor, of course, had their own flavor of SQL which
 presented the eternal threat that a critical query wouldn't run on a new database, but for the most part SQL was SQL.
 
+However, there were issues with this approach. Relational databases are inherently constricting --- adding new entries to an already-extant 
+database table is easy, but modifying a table to allow for different entry attributes requires halting all user interaction with the table while
+the table is modified. For popular applications, this presents a nontrivial amount of downtime for a potentially large number of displeased 
+users (see Appendix A for more discussion of the two structures).
+
 In the modern era, companies are increasingly looking to non-relational databases as storage solutions, because they can be scaled up
 much more cost-effectively and quickly -- a must in today's data-driven business world. However, non-relational databases don't yet have
 a common language like SQL; one database's SELECT could very well be another's INSERT.
@@ -153,6 +158,8 @@ Enter the Query Universal Interface (QUI).
 QUI attempts to ease the transition between non-relational databases, like other ORMs do for relational databases. QUI does not pretend
 to implement a universal querying syntax, but rather a universal interface through which code can talk to data with minimal, if any, change.
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%	SECTION 2	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Language Overview}
 \subsection{Basic Computation}
 At its heart, QUI is a translation engine. It converts class-like data into a form that is understandable to a backend's API. This form, obviously, can
@@ -174,7 +181,7 @@ as long as they honor the requirements of these two root classes.
 
 There are two other 'core' classes behind QUI---\il{ModelMixin} and \il{FieldMixin}, which serve similar purposes to \il{Model} and \il{Field}: interface
  requirements, which any future backend mixins need to implement in order to be considered valid. In general, \il{ModelMixin}'s subclasses are used
-to add the functionality that \il{Model} requires of \emph{its} subclasses; likewise with \Il{FieldMixin}'s subclasses and \il{Field}'s.
+to add the functionality that \il{Model} requires of \emph{its} subclasses; likewise with \il{FieldMixin}'s subclasses and \il{Field}'s.
 
 \subsection{Basic Control Structures}
 Users can fine-tune their interactions with their databases in a couple of ways:
@@ -191,7 +198,7 @@ but works the same way as subclassing any other new-style Python abstract metacl
 subclass with which QUI can work. Whether or not it works the way you intend is an entirely different matter.
 
 \subsection{Input/Output}
-As input, QUI will accept...a valid Python class definition. As output, QUI gives users...an altered (dare we say, improved?) class definition.
+As input, QUI will accept a valid Python class definition. As output, QUI gives users...an altered (dare we say, improved?) class definition.
 A QUI model need never use the extra methods provided by QUI; model classes can be instantiated just like any other class. Thus, declaring
 a class to be a QUI model necessitates zero changes to any existing code besides the class definition.
 
@@ -230,7 +237,8 @@ make it their focus to unify \emph{non-relational} databases. Packages like SQLA
 universalize access to many SQL-based relational databases, but neither officially supports non-relational databases of any sort.\\
 
 QUI attempts to address an untapped niche market; its declared purpose is unique amongst ORMs.
-
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%	SECTION 3	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Example Programs}
 \label{examples}
 \subsection{Model Definition}
@@ -326,6 +334,7 @@ QUI's ease of use is best exhibited by entering the Python interpreter:
 
 \lstsession[creating an instance with arbitrary attributes]{getting_and_setting.py}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%	SECTION 4	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Language Design}
 
 \subsection{Getting, Putting, and Creating}
@@ -338,7 +347,7 @@ Since our time for this project was limited, we focused our efforts on what we s
 \item \textbf{Putting} an instance of a stored model into the backend.
 \item \textbf{Getting} an instance of a stored model from the data stored in the backend.
 \end{enumerate}
-
+This tight focus on basic database operations also means there is almost no difficulty in learning QUI's syntax.
 
 \subsection{Syntax}
 As has been said repeatedly, QUI is an internal DSL; its syntax is no different from that allowed in any valid Python program. 
@@ -346,27 +355,36 @@ Nevertheless, QUI strives (in true Pythonic style) for an optimal combination of
 exposing three extra methods on stored models to users: \il{get(**kwargs)}, \il{create(**kwargs)}, and \il{put()}.
 
 By only adding these three verbs to any \il{Model} definition, QUI runs the least risk of becoming a burden to anyone who decides to use
-it; furthermore, these method names are unlikely to be already overidden. QUI doesn't want to step on anybody's toes, after all. 
+it; furthermore, these method names are unlikely to be already overridden. QUI doesn't want to step on anybody's toes, after all. 
 
 Most of QUI's syntax is covered in Section~\ref{examples}; the example \il{Model} definitions and interpreter sessions cover the fundamentals,
-and even some non-fundamentals, of using QUI pretty extensively. 
+and even some non-fundamentals, of using QUI pretty extensively. The user has a large amount of power when decided how exactly to create their
+Models, and are able to give the Model functionality in whatever manner they deem fit.
 
 \subsection{Semantic Abstractions/Building Blocks}
+QUI is abstracted into a number of different, though related sections. The user creates some sort of model (e.g., a FileModel), and performs \texttt{put, get,} and \texttt{create} operations as needed (they can also create other subclasses or functions within the FileModel class). At the top of the file (for now), users must import
+our Model, any fields they want to use, and any decorators they want to use. 
+
+Under the hood, operations become more complex for each API.  At its core, however, QUI uses the 'black box' of the API for each backend database, and accesses methods
+as necessary to create, put, or get model instances. The user inputs commands using their created file (see examples above), which is decorated with the appropriate backend. 
+These decorators call the appropriate Field and Model mixins so attributes are properly assigned and stored depending on the backend. The user should never see any actual 
+database operations; QUI will handle all connections and operations necessary beyond the user's call to get, put, or create.
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%	SECTION 5	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Language Implementation}
 \subsection{Host Language}
 QUI is implemented in Python, which was chosen for three main reasons:
 \begin{enumerate}
-\item Our own familiarity with it.
+\item Our own familiarity with the language.
 \item Excellent metaprogramming facilities.
 \item Availability of backend APIs.
 \end{enumerate}
 In a big way, our vision of QUI's design steered us towards Python as the host language. 
 
 \subsection{Parsing}
-As an internal DSL, QUI doesn't do `parsing', in the same sense as an external one --- there's no need for an abstract syntax tree, and we can rely on Python to catch syntactically 
-illegal expressions in many cases.
+As an internal DSL, it's unnecessary for QUI to perform any `parsing' operations, in the same sense as an external one --- there's no need for an abstract syntax tree, as QUI syntax
+is merely Python syntax. In addition, we can rely on Python to catch syntactically illegal expressions in many cases.
 
 \subsection{Execution}
 As an internal DSL, QUI's semantics do not differ from those of its host language, Python. Figure~\ref{fig:classdef} describes the operations that QUI is doing behind the scenes when
@@ -377,10 +395,61 @@ a class is decorated with \il{storage}.
 \caption{QUI's order of operations}
 \label{fig:classdef}
 \end{figure}
-
 The \il{subclass} decorator is similar, but only performs the operations relating to class-wide fields, since a subclass of a QUI model will already have much of the setup done by its parent class. 
 
+\subsection{Backends}
+Currently, two backends are supported. 
+\subsubsection{MongoDB}
+	MongoDB is a  popular, free non-relational database. For putting, model instances are converted to JSON, and then saved in a database via some port. The port default is 27017,
+	but the user can specify the port via passed in arguments. The \texttt{\_get\_interface()} method takes the model instance and sets each field as a key:value pair in the JSON
+	dict.
+
+	Getting is simply a matter of finding the object which corresponds to the passed in keyword arguments.
+	
+\subsubsection{Pickling}
+	Also supported is local storage of model instances, using the Python pickle module. Model instances are stored in the directory specified by the \texttt{\_path} variable, in
+	the file $Modelname\backslash InstanceName$. Sadly, Python's pickle module will only pickle global classes (namely, not our Models), so this backend simply pickles a dict
+	which contains the state of the model instance.
+	
 \section{Evaluation}
-For the most part, it all seems to work; multiple databases are supported, and our design is modular enough that support for more databases would be simple to add, if we so wished. 
+The basic implementation of QUI went as planned, building the framework for adding various backends. Adding a new backend is a nontrivial task, but only one file needs to be added
+(\texttt{NewBackEndMixins.py}) defining the necessary classes, and QUI will take care of performing the operations given a new Model.
+
+Likewise, QUI's syntax is clear and concise, providing basic functionality while allowing the user full access to the power of Python. The user is free to use our built-in backend mixins, or 
+to define their own if they so wish. This is well in keeping with the idea of non-relational databases: to give the user the flexibility they need to extend their applications in whatever
+directions they wish to go.
+
+However, some difficulties were encountered in the implementation of QUI. Our initial intention was to use Google AppEngine as another backend, but upon investigation into the AppEngine
+datastore, we found that AppEngine supports a non-relational database solely for applications on Google AppEngine. Pulling out just the datastore connection proved essentially impossible 
+without a working application online. In light of these, providing support for just the AppEngine database seemed both overly time-consuming and unlikely to benefit any customers, as they
+still have to use other AppEngine functionalities to access their datastores. So, we focused on MongoDB and Pickling as our supported backends.
+
+QUI was developed and implemented as a team. The initial design was done entirely on whiteboards with both participants working together. Later in the process, pair programming was 
+used, with both members working on one computer. This was the abstract base classes and later the classes for the mixins to inherit. The last stage of the project was actually 
+developing for the backends. The backends were split between the two team members, though both had input in each backend --- for example, the decision to not support AppEngine
+as a backend was made as a team.
+
+\newpage
+\appendix
+\begin{center}Appendices\end{center}
+
+\section{Non-Relational Databases}
+Non-relational databases differ distinctly from their more popular cousins. Relational databases adhere to the more traditional structure of some number of tables, linked
+by specific keys, with some number of rows and columns. Every row in a specific table must have some specific attributes (the columns of the table), the same as every 
+other row of the table. Adding a column to a table then requires stopping all interactions on that table, as every entry must be changed. 
+
+Non-relational databases are not as restricted in their structure (see Figure~\ref{fig:reltab}). Rather than each entry being a row in a table with a fixed number of 
+columns, each model instance is a 'page' in the database, with its own fields (some of which may be required, and others specific to the instance itself). So, 
+non-relational databases are much more horizontally flexible when freezing the database would be inopportune if a new field needs to be added.
+
+\begin{figure}[htb]
+\centering
+\includegraphics[width=300px]{RelNonRel}
+\caption{Relational vs. Non-Relational (source: readwriteweb.com) }
+\label{fig:reltab}
+\end{figure}
+
+Implementations of non-relational databases vary widely between backends, but the main idea of non-relational databases is removing the field restriction for the user.
+One of QUI's basic goals is to preserve this functionality.
 
 \end{document}
