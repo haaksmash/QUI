@@ -5,17 +5,12 @@ Created on Nov 13, 2011
 '''
 import abc
 
-#from quiexceptions.model_exceptions import *
-
 class Meta(abc.ABCMeta):
     pass
 
 
 class ModelMixin(object):
     '''Abstract base class for all ModelMixins.
-    
-    
-    
     '''
     __metaclass__ = Meta
 
@@ -30,7 +25,9 @@ class ModelMixin(object):
 
 
     def __getattribute__(self, name):
-        """Overriden to make Fields 'invisible'.
+        """Accessor for a specific attribute of a model by name.
+        
+        Overriden to make Fields 'invisible'.
         
         Behaves normally for non-Field attributes.
         """
@@ -49,10 +46,13 @@ class ModelMixin(object):
             return object.__getattribute__(self, name)
 
     def __setattr__(self, name, value):
-        """Overriden to make Fields 'invisible'.
+        """Sets a specific attribute of a model
+        
+        Overriden to make Fields 'invisible'.
         
         Behaves normally for non-Field attributes.
         """
+        # check if the attribute exists, then set it if so.
         if name != "_field_names" and name in self._field_names.keys():
             object.__getattribute__(self,"_field_names")[name].value = value
         elif name in object.__getattribute__(self, "_class_fields").keys():
@@ -63,17 +63,25 @@ class ModelMixin(object):
 
     @abc.abstractmethod
     def put(self):
+        """Implemented in the specific BackendModelMix classes to put a model instance into the database"""
         pass
     
     @abc.abstractmethod
     def _get_interface(self):
+        """Implemented in the specific BackendModelMix to convert from the specific Model instance to whatever 
+        backend object we need (for example, json)
+        """
         pass
     
     @abc.abstractmethod
     def get(self, pk):
+        """ Implemented in the specific BackendModelMix to get a specific model instance from the database.
+        Each model instance has a specific, unique primary key. 
+        """
         pass
     
     @abc.abstractmethod
     def create(self, **kwargs):
+        """ Shortcut method. Creates the model instance and then puts it into the database using .put(). """
         pass
 

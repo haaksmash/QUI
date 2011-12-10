@@ -18,6 +18,8 @@ class MongoDBModelMix(ModelMixin):
     
     @classmethod
     def _collection(cls):
+        """ Gets the class collection.
+        """
         if isinstance(cls, MongoDBModelMix):
             return cls.__class__._collection()
         return u"{}".format(cls.__name__)
