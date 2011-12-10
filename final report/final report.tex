@@ -433,6 +433,8 @@ Time constraints also presented an issue during later development. The two metho
 they have almost no impact on the usability of the database and were added as a potential feature that might be convenient to users. The method \il{translate()} currently returns the 
 value of a field, but would in the future convert a top-level \il{StringField()} (for example) to a \il{db.StringProperty()}, or whatever is appropriate for that backend.
 
+Likewise, the method \il{clean()} is intended to sanitize data before it is inserted into the database.
+
 QUI was developed and implemented as a team. The initial design was done entirely on whiteboards with both participants working together.
 
   Later in the process, pair programming was used, with both members working on one computer. This was the abstract base classes and later the classes for the mixins to inherit. 
