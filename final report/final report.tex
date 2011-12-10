@@ -421,7 +421,8 @@ The basic implementation of QUI went as planned, building the framework for addi
 
 Likewise, QUI's syntax is clear and concise, providing basic functionality while allowing the user full access to the power of Python. The user is free to use our built-in backend mixins, or 
 to define their own if they so wish. This is well in keeping with the idea of non-relational databases: to give the user the flexibility they need to extend their applications in whatever
-directions they wish to go.
+directions they wish to go. Furthermore, we built in several `escape hatches,' to allow users to avoid QUI's topmost layer, if desired: methods like \il{_get_direct()} allow a user to
+directly access a \il{Field}, bypassing \il{Model}'s overridden \il{__getattribute__} and \il{__setattr__} entirely.
 
 However, some difficulties were encountered in the implementation of QUI. Our initial intention was to use Google AppEngine as another backend, but upon investigation into the AppEngine
 datastore, we found that AppEngine supports a non-relational database solely for applications on Google AppEngine. Pulling out just the datastore connection proved essentially impossible 
